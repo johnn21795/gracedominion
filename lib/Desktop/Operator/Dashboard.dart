@@ -7,6 +7,8 @@ import 'package:data_table_2/data_table_2.dart';
 
 Color defaultColor = Colors.black45;
 Map<String, int> tableColumns =  {};
+Map<String, int> tableColumnsCopy =   {"James" :0,"Athena":1,"Juliet":2,"Esther":3,"Rachel":4,"Mike":5,"John":6};
+List<String> tableColumns2  = const ["James" ,"Athena","Juliet","Esther","Rachel","Mike","John"];
 class OperatorDashboard extends StatefulWidget {
   const OperatorDashboard({Key? key}) : super(key: key);
 
@@ -692,7 +694,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             child: Container(
               width: 200,
               height: 50,
-              child: DropdownCheckbox(options: tableColumns, update: changeState,),
+              child: DropdownCheckbox(options: tableColumns2, update: changeState,),
             ),
           ),
           Positioned(
@@ -1099,19 +1101,34 @@ class TableClass extends StatefulWidget {
 
 class _TableClassState extends State<TableClass> {
    void setAvailableColumns(){
-     print("Setting Available Columns");
+     print("Setting Available Columns  ${tableColumns.keys}");
      availableColumns = [];
-     // tableColumns.forEach((element) {
-     //   availableColumns.add(
-     //       DataColumn2(
-     //         label:  Center(child: Text(element)),
-     //         size: ColumnSize.M,
-     //         onSort: (_, __) {
-     //         },
-     //       )
-     //   );
-     // });
+     for (var element in tableColumns.keys) {
+       availableColumns.add(
+           DataColumn2(
+             label:  Center(child: Text(element)),
+             size: ColumnSize.M,
+             onSort: (_, __) {
+             },
+           )
+       );
+     }
 
+   }
+   List<DataCell> setAvailableCells(e){
+     print("Setting Available Cells");
+     availableCells = [];
+
+     for (var element in tableColumns.keys) {
+       availableCells.add(
+         DataCell(
+           Center(child: Text('${e["Method"]}')),
+         ),
+       );
+     }
+
+
+     return availableCells;
    }
 
   @override
@@ -1182,21 +1199,7 @@ class _TableClassState extends State<TableClass> {
     );
   }
 
-   List<DataCell> setAvailableCells(e){
-     print("Setting Available Cells");
-     availableCells = [];
 
-     // tableColumns.forEach((element) {
-     //   availableCells.add(
-     //     DataCell(
-     //       Center(child: Text('${e["Method"]}')),
-     //     ),
-     //   );
-     // });
-
-
-     return availableCells;
-   }
 }
 class CheckboxWithLabel extends StatefulWidget {
   final String label;
@@ -1234,7 +1237,6 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
                 switch(widget.label){
                   case "James":
                     hoverColor  = Colors.green;
-
                     break;
                   case "Athena":
                     hoverColor  = Colors.yellow;
@@ -1246,10 +1248,15 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
                     hoverColor  = Colors.purple;
                     break;
                 }
+                Map<String, int> tableColumnsTemp = tableColumns;
                if(value!){
-                 // tableColumns.insert(1, widget.label);
+                 tableColumnsTemp.putIfAbsent(widget.label, () => tableColumnsCopy.putIfAbsent(widget.label, () => 0));
+                tableColumns = tableColumnsTemp;
+                print("Adding Value");
                }else{
                  tableColumns.remove(widget.label);
+                 print("removing Value");
+                 // tableColumns.remove(widget.label);
                }
                 _isChecked = value!;
                 widget.onChanged(_isChecked);
@@ -1263,7 +1270,7 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
   }
 }
 class DropdownCheckbox extends StatefulWidget {
-  final Map<String, int> options;
+  final List<String> options;
   final Function update;
 
   DropdownCheckbox({required this.options, required this.update});
@@ -1272,7 +1279,7 @@ class DropdownCheckbox extends StatefulWidget {
   _DropdownCheckboxState createState() => _DropdownCheckboxState();
 }
 
-List<String> _selectedItems2 = tableColumns.keys.toList();
+List<String> _selectedItems2 =  tableColumns.keys.toList();
 // ["James","Athena","Juliet","Esther","Rachel","Mike","Johnn"]
 String? sec;
 class _DropdownCheckboxState extends State<DropdownCheckbox> {
@@ -1284,34 +1291,34 @@ class _DropdownCheckboxState extends State<DropdownCheckbox> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // DropdownButtonFormField<String>(
-          //   key: _key,
-          //   hint: const Text("Select Columns"),
-          //   // value: sec,
-          //   items: widget.options.keys.((String value) {
-          //     return DropdownMenuItem<String>(
-          //       value: value,
-          //       child: CheckboxWithLabel(
-          //         label: value,
-          //         onChanged: (bool isChecked) {
-          //           setState(() {
-          //             if (isChecked) {
-          //               _selectedItems2.add(value);
-          //             } else {
-          //               _selectedItems2.remove(value);
-          //             }
-          //             widget.update.call();
-          //             _key.currentState?.reset();
-          //           });
-          //         },
-          //         selected:   _selectedItems2,
-          //       ),
-          //     );
-          //   }).toList(),
-          //   onChanged: (String? newValue) {
-          //     // do something with selected value
-          //   },
-          // ),
+          DropdownButtonFormField<String>(
+            key: _key,
+            hint: const Text("Select Columns"),
+            // value: sec,
+            items: widget.options.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: CheckboxWithLabel(
+                  label: value,
+                  onChanged: (bool isChecked) {
+                    setState(() {
+                      if (isChecked) {
+                        _selectedItems2.add(value);
+                      } else {
+                        _selectedItems2.remove(value);
+                      }
+                      widget.update.call();
+                      _key.currentState?.reset();
+                    });
+                  },
+                  selected:   _selectedItems2,
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              // do something with selected value
+            },
+          ),
         ],
       ),
     );
