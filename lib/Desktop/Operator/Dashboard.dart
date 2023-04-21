@@ -6,15 +6,20 @@ import 'package:window_manager/window_manager.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 Color defaultColor = Colors.black45;
+
 Map<String, int> tableColumns =  {};
-Map<String, int> tableColumnsCopy =   {"James" :0,"Athena":1,"Juliet":2,"Esther":3,"Rachel":4,"Mike":5,"John":6};
-List<String> tableColumns2  = const ["James" ,"Athena","Juliet","Esther","Rachel","Mike","John"];
+
+Map<String, int> tableColumnsCopy =   {"No" :0,"Date":1,"Amount":2,"LastMark":3,"TotalPaid":4,"CollectedBy":5,"EnteredBy":6,"Verified":7};
+
+List<String> tableColumns2  = const ["No","Date","Amount","LastMark","TotalPaid","CollectedBy","EnteredBy","Verified"];
+
 class OperatorDashboard extends StatefulWidget {
   const OperatorDashboard({Key? key}) : super(key: key);
 
   @override
   State<OperatorDashboard> createState() => _OperatorDashboardState();
 }
+
 Color hoverColor = Colors.yellow;
 
 class _OperatorDashboardState extends State<OperatorDashboard> {
@@ -73,7 +78,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   @override
   void initState() {
     windowManager.setTitleBarStyle(TitleBarStyle.normal);
-    tableColumns = {"James" :0,"Athena":1,"Juliet":2,"Esther":3,"Rachel":4,"Mike":5,"John":6};
+    tableColumns = {"No" :0,"Date":1,"Amount":2,"LastMark":3,"TotalPaid":4,"CollectedBy":5,"EnteredBy":6,"Verified":7};
     print(tableColumns);
     super.initState();
   }
@@ -97,7 +102,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    setAvailableColumns();
     return Scaffold(
       body: Container(
         color: Colors.white,
@@ -134,12 +138,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
         color: Colors.purple[700],
         fontFamily: 'copper');
 
-      void _mystate(){
-        setState(() {
-
-        });
-      }
-
     return Container(
       width: screenSize.width,
       child: Stack(
@@ -147,7 +145,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
           Positioned(
             child: Container(
               color: Colors.white54,
-              width: screenSize.width * 0.5,
+              width: screenSize.width * 0.48,
               height: screenSize.height - 50,
               child: Stack(
                 children: [
@@ -291,15 +289,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Expanded(
                             flex: 3,
                             child: DropdownButton(
-                              isExpanded: true,
+                              isExpanded: false,
                               value: "2314568798  Blessing",
                               items: [
                                 "2314568798  Blessing",
                                 "Card2",
                                 "Card3",
                                 "Card4"
-                              ]
-                                  .map((item) => DropdownMenuItem<String>(
+                              ].map((item) => DropdownMenuItem<String>(
                                         value: item,
                                         child: Text(item),
                                       ))
@@ -690,7 +687,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             ),
           ),
           Positioned(
-            left: screenSize.width * 0.50 + 5,
+            left: screenSize.width * 0.49,
             child: Container(
               width: 200,
               height: 50,
@@ -707,10 +704,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             }, const Size(120, 35)),
           ),
           Positioned(
-              left: screenSize.width * 0.5,
+              left: screenSize.width * 0.48,
               top: 40,
               child: Container(
-                  width: screenSize.width * 0.41,
+                  width: screenSize.width * 0.45,
                   height: screenSize.height - 150,
                   // child: bodyData2(screenSize)
                 child:   TableClass(),
@@ -726,180 +723,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   static List<Map<String, dynamic>> returnData = [];
   static String lastCard = "";
 
-  static Future<List<Map<String, dynamic>>> loadPayment(String card) async {
-    if (card != lastCard) {
-      returnData = await MainClass.loadPayment(card);
-      lastCard = card;
-      print("Operator Data............ $returnData");
-    } else {
-      lastCard = card;
-    }
-    return returnData;
-  }
-
-
-
-
-
-  Widget bodyData2(Size size) {
-    // dataTableShowLogs = false;
-    return FutureBuilder(
-      future: loadPayment("card"),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        } else {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            verticalDirection: VerticalDirection.down,
-            children: <Widget>[
-              Expanded(
-                child: Container(
-                    padding: const EdgeInsets.all(5),
-                    child: bodyData3(snapshot.data!, size)),
-              )
-            ],
-          );
-        }
-      },
-    );
-  }
-
   List<DataColumn> selectedColumns = [];
   List<DataColumn> availableColumns = [];
   List<DataCell>  availableCells = [];
-  Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
-    bool enabled = false;
-    dataTableShowLogs = false;
-    return Container(
-      width: size.width * 0.45,
-      child: DataTable2(
-          sortColumnIndex: 0,
-          sortAscending: true,
-          headingTextStyle: const TextStyle(backgroundColor: Colors.purple),
-          headingRowColor: MaterialStateProperty.all(Colors.purple),
-          border: const TableBorder(
-            left: BorderSide(color: Colors.purple),
-            right: BorderSide(color: Colors.purple),
-          ),
-          horizontalMargin: 0,
-          headingRowHeight: 40,
-          dataRowHeight: 45,
-          dividerThickness: 2,
-          columnSpacing: 0,
-          showCheckboxColumn: false,
-          showBottomBorder: true,
-          smRatio: 0.4,
-          lmRatio: 2,
-          columns: availableColumns,
-          rows: payment
-              .map((e) => DataRow(
-                      selected: e["Method"] == "pos",
-                      onSelectChanged: (val) {
-                        setState(() {
-                          print("${e["Method"]}");
-                        });
-                      },
-                      cells: setAvailableCells(e)))
-              .toList()),
-    );
-  }
 
-  void setAvailableColumns(){
-    print("Setting Available Columns");
-    availableColumns = [];
-    availableColumns.addAll(
-    [
-        DataColumn2(
-          label: const Center(child: Text("No")),
-          size: ColumnSize.S,
-          onSort: (_, __) {
-            setState(() {
-              // widget.photos.sort((a, b) => a.data["quote"]["companyName"]
-              //     .compareTo(b.data["quote"]["companyName"]));
-            });
-          },
-        ),
-        DataColumn2(
-          label: const Center(child: Text("Date")),
-          onSort: (_, __) {
-            setState(() {
-              // widget.photos.sort((a, b) => a.data["quote"]["companyName"]
-              //     .compareTo(b.data["quote"]["companyName"]));
-            });
-          },
-        ),
-        DataColumn2(
-          label: const Center(child: Text("Amount")),
-          onSort: (_, __) {
-            setState(() {
-              // widget.photos.sort((a, b) => a.data["stats"]["dividendYield"]
-              //     .compareTo(b.data["stats"]["dividendYield"]));
-            });
-          },
-        ),
-        DataColumn(
-          label: const Center(child: Text("Method")),
-          onSort: (_, __) {
-            setState(() {
-              // widget.photos.sort((a, b) => a.data["quote"]["iexBidPrice"]
-              //     .compareTo(b.data["quote"]["iexBidPrice"]));
-            });
-          },
-        ),
-        DataColumn(
-          label: const Center(child: Text("LastMark")),
-          onSort: (_, __) {
-            setState(() {
-              // widget.photos.sort((a, b) => a.data["stats"]["latestPrice"]
-              //     .compareTo(b.data["stats"]["latestPrice"]));
-            });
-          },
-        ),
-      ]
-    );
-  }
-  List<DataCell> setAvailableCells(e){
-    print("Setting Available Cells");
-    availableCells = [];
-     availableCells.addAll([
-      DataCell(
-        Center(child: Text('${e["index"]}')),
-      ),
-      DataCell(
-          GestureDetector(
-            onDoubleTap: () {
-              print('onSubmited enabled');
-            },
-            child: Center(
-              child: TextFormField(
-                textAlign: TextAlign.center,
-                initialValue: MainClass.userFormat
-                    .format(DateTime.parse("${e["Date"]}")),
-                keyboardType: TextInputType.text,
-                onFieldSubmitted: (val) {
-                  print('onSubmited $val');
-                },
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-          ),
-          showEditIcon: false),
-      DataCell(
-        Center(child: Text('${e["Amount"]}')),
-      ),
-      DataCell(
-        Center(child: Text('${e["Method"]}')),
-      ),
-      DataCell(
-        Center(child: Text('${e["LastMark"]}')),
-      ),
-    ]);
-     return availableCells;
-  }
 
   void clearUI() {
     profile = const Image(
@@ -1033,17 +860,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             phone,
             style: const TextStyle(color: Colors.black),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Text(
-                  MainClass.returnTitleCase(address),
-                  style: const TextStyle(color: Colors.black),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                )),
-          ),
+          SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                MainClass.returnTitleCase(address),
+                style: const TextStyle(color: Colors.black),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              )),
           Text(
             date,
             style: const TextStyle(color: Colors.black),
@@ -1078,7 +902,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   }
 }
 
-
 class TableClass extends StatefulWidget {
   const TableClass({super.key});
 
@@ -1103,11 +926,19 @@ class _TableClassState extends State<TableClass> {
    void setAvailableColumns(){
      print("Setting Available Columns  ${tableColumns.keys}");
      availableColumns = [];
+     var mapEntries = tableColumns.entries.toList()
+       ..sort((a, b) => a.value.compareTo(b.value));
+
+     tableColumns
+       ..clear()
+       ..addEntries(mapEntries);
+
+
      for (var element in tableColumns.keys) {
        availableColumns.add(
            DataColumn2(
              label:  Center(child: Text(element)),
-             size: ColumnSize.M,
+             size: element == "No"? ColumnSize.S : ColumnSize.M,
              onSort: (_, __) {
              },
            )
@@ -1134,6 +965,7 @@ class _TableClassState extends State<TableClass> {
   @override
   Widget build(BuildContext context) {
     print("Undisturbed is built");
+    Size size = MediaQuery.of(context).size;
     setAvailableColumns();
     return FutureBuilder(
       future: TableClass.loadPayment("card"),
@@ -1149,7 +981,7 @@ class _TableClassState extends State<TableClass> {
               Expanded(
                 child: Container(
                     padding: const EdgeInsets.all(5),
-                    child: bodyData3(snapshot.data!)),
+                    child: bodyData3(snapshot.data!, size)),
               )
             ],
           );
@@ -1164,15 +996,15 @@ class _TableClassState extends State<TableClass> {
 
   List<DataCell>  availableCells = [];
 
-  Widget bodyData3(List<Map<String, dynamic>> payment) {
+  Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
     bool enabled = false;
     dataTableShowLogs = false;
     return Container(
-      width: 600,
+      width: size.width * 0.45,
       child: DataTable2(
           sortColumnIndex: 0,
           sortAscending: true,
-          headingTextStyle:  TextStyle(backgroundColor: hoverColor),
+          headingTextStyle:  const TextStyle(backgroundColor: Colors.purple),
           headingRowColor: MaterialStateProperty.all(Colors.purple),
           border: const TableBorder(
             left: BorderSide(color: Colors.purple),
@@ -1192,7 +1024,6 @@ class _TableClassState extends State<TableClass> {
               .map((e) => DataRow(
               selected: e["Method"] == "pos",
               onSelectChanged: (val) {
-
               },
               cells: setAvailableCells(e)))
               .toList()),
@@ -1201,6 +1032,7 @@ class _TableClassState extends State<TableClass> {
 
 
 }
+
 class CheckboxWithLabel extends StatefulWidget {
   final String label;
   final Function(bool isChecked) onChanged;
@@ -1218,6 +1050,30 @@ class CheckboxWithLabel extends StatefulWidget {
 
 class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
   bool _isChecked = true;
+
+  int getPosition(columnName){
+    int position = 0;
+    switch(columnName){
+      case "No": position = 0;
+      break;
+      case "Date": position = 1;
+      break;
+      case "Amount": position = 2;
+      break;
+      case "LastMark": position = 3;
+      break;
+      case "TotalPaid": position = 4;
+      break;
+      case "CollectedBy": position = 5;
+      break;
+      case "Verified": position = 6;
+      break;
+    }
+
+    return position;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -1234,29 +1090,12 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
             value: widget.selected.contains(widget.label),
             onChanged: (bool? value) {
               setState(() {
-                switch(widget.label){
-                  case "James":
-                    hoverColor  = Colors.green;
-                    break;
-                  case "Athena":
-                    hoverColor  = Colors.yellow;
-                    break;
-                  case "Esther":
-                    hoverColor  = Colors.blue;
-                    break;
-                  case "Mike":
-                    hoverColor  = Colors.purple;
-                    break;
-                }
                 Map<String, int> tableColumnsTemp = tableColumns;
                if(value!){
-                 tableColumnsTemp.putIfAbsent(widget.label, () => tableColumnsCopy.putIfAbsent(widget.label, () => 0));
+                 tableColumnsTemp.putIfAbsent(widget.label, () => getPosition(widget.label));
                 tableColumns = tableColumnsTemp;
-                print("Adding Value");
                }else{
                  tableColumns.remove(widget.label);
-                 print("removing Value");
-                 // tableColumns.remove(widget.label);
                }
                 _isChecked = value!;
                 widget.onChanged(_isChecked);
@@ -1269,6 +1108,7 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
     );
   }
 }
+
 class DropdownCheckbox extends StatefulWidget {
   final List<String> options;
   final Function update;
@@ -1280,13 +1120,13 @@ class DropdownCheckbox extends StatefulWidget {
 }
 
 List<String> _selectedItems2 =  tableColumns.keys.toList();
-// ["James","Athena","Juliet","Esther","Rachel","Mike","Johnn"]
-String? sec;
+
+
 class _DropdownCheckboxState extends State<DropdownCheckbox> {
   late final GlobalKey<FormFieldState> _key = GlobalKey<FormFieldState>();
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 200,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1294,7 +1134,6 @@ class _DropdownCheckboxState extends State<DropdownCheckbox> {
           DropdownButtonFormField<String>(
             key: _key,
             hint: const Text("Select Columns"),
-            // value: sec,
             items: widget.options.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
