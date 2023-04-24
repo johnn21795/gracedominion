@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Classes/MainClass.dart';
 import 'package:gracedominion/Desktop/Splash.dart';
+import 'package:gracedominion/Desktop/WidgetClass.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:data_table_2/data_table_2.dart';
+import 'package:intl/intl.dart';
 
 Color defaultColor = Colors.black45;
-
+final dateFormat = DateFormat('dd-MM-yyyy');
 Map<String, int> tableColumns =  {};
 
-Map<String, int> tableColumnsCopy =   {"No" :0,"Date":1,"Amount":2,"LastMark":3,"TotalPaid":4,"CollectedBy":5,"EnteredBy":6,"Verified":7};
+Map<String, int> tableColumnsCopy =   {"No" :0,"Date":1,"Amount":2,"Method":3,"LastMark":4,"TotalPaid":5,"CollectedBy":6,"RegisteredBy":7,"Verified":8};
 
-List<String> tableColumns2  = const ["No","Date","Amount","LastMark","TotalPaid","CollectedBy","EnteredBy","Verified"];
+List<String> tableColumns2  = const ["No","Date","Amount","Method","LastMark","TotalPaid","CollectedBy","RegisteredBy","Verified"];
 
 class OperatorDashboard extends StatefulWidget {
   const OperatorDashboard({Key? key}) : super(key: key);
@@ -24,10 +26,11 @@ Color hoverColor = Colors.yellow;
 
 class _OperatorDashboardState extends State<OperatorDashboard> {
   final cardTextController = TextEditingController();
-  final amountController = TextEditingController();
   bool isTyping = false;
   bool isAmount = false;
   bool isButtonDisabled = true;
+  bool isUpdating = false;
+  bool searchView = false;
 
   //Customer Information Variables
   Image profile = const Image(
@@ -39,6 +42,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   String phone = "08142605775";
   String address = "CS 60 CornerStone Plaza, Alaba Int'l Market Ojo Lagos";
   String date = "11/10/2022";
+  String status = "Active";
 
   //Payment Information Variables
   String cardPackage = "Card No";
@@ -78,26 +82,23 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   @override
   void initState() {
     windowManager.setTitleBarStyle(TitleBarStyle.normal);
-    tableColumns = {"No" :0,"Date":1,"Amount":2,"LastMark":3,"TotalPaid":4,"CollectedBy":5,"EnteredBy":6,"Verified":7};
-    print(tableColumns);
+    tableColumns = {"No" :0,"Date":1,"Amount":2,"Method":3,"LastMark":4,"TotalPaid":5};
     super.initState();
   }
 
 
   Color focusedColor = Colors.green;
 
-  double navWidth = 70;
-  double expWidth = 200;
 
   List<bool> isHover = List.generate(6, (index) => false);
   List<bool> selectColumns = List.generate(8, (index) => true);
+
   final cardController = TextEditingController();
+  String cardLabel = "Card Number";
+  Color labelColor = Colors.purple;
+  bool isSearching = false;
 
-   void changeState(){
-    setState(() {
-
-    });
-  }
+  void changeState(){ setState(() {}); }
 
 
   @override
@@ -183,7 +184,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           RichText(
                             text: TextSpan(
-                              text: ' ',
                               children: <TextSpan>[
                                 const TextSpan(
                                     text: 'Status:  ',
@@ -192,7 +192,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                         fontFamily: "copper",
                                         color: Colors.purple)),
                                 TextSpan(
-                                    text: 'Active',
+                                    text: CustomerInformation.data["Status"],
                                     style: TextStyle(
                                         fontSize: 13,
                                         fontFamily: "claredon",
@@ -212,7 +212,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                         fontFamily: "copper",
                                         color: Colors.purple)),
                                 TextSpan(
-                                    text: 'Blessing',
+                                    text: CustomerInformation.data["StaffReg"],
                                     style: TextStyle(
                                         fontSize: 13,
                                         fontFamily: "claredon",
@@ -240,21 +240,73 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                             child: Container(
                               transform: Matrix4.translationValues(0, -10, 0),
                               child: TextField(
-                                onChanged: (card) async {
-                                  cardNo = card.toUpperCase();
-                                  cardController.value.text.isEmpty
-                                      ? clearUI
-                                      : setUI([]);
+                                onSubmitted: (query){
+                                  searchFunction(query);
                                 },
-                                style: TextStyle(fontSize: 14),
+                                onChanged: (card) async {
+                                  if(cardController.value.text.length == 10 ){
+                                    isSearching = true;
+                                    searchView = false;
+                                    setState(() {});
+                                  }
+                                  if(cardController.value.text.length == 10 ){
+                                    CustomerInformation.data = await MainClass.loadCustomerInfo(card);
+                                    isSearching = false;
+                                    if(CustomerInformation.data.containsKey("error")){
+                                      var err = CustomerInformation.data.putIfAbsent("error", () => null);
+                                      switch(err.code.toString()){
+                                        case "5":
+                                          cardLabel = "Card Not Found";
+                                          labelColor = const Color(0xff9b0101);
+                                          break;
+                                        case "14":
+                                          cardLabel = "No Internet Connection";
+                                          labelColor = const Color(0xffd73d0a);
+                                          break;
+                                        case "2":
+                                          cardLabel = "Slow Connection, retry";
+                                          labelColor =  const Color(0xffde4e1b);
+                                          break;
+                                      }
+                                      CustomerInformation.data = CustomerInformation.defaultData;
+                                    }else{
+                                      if(CustomerInformation.data.isEmpty){
+                                        CustomerInformation.data = CustomerInformation.defaultData;
+                                        cardLabel = "Card Number";
+                                        labelColor = Colors.purple;
+                                      }else{
+                                        cardLabel = "Card Number";
+                                        labelColor =  const Color(0xff258203);
+                                      }
+                                    }
+                                  } else{
+                                    cardLabel = "Card Number";
+                                    labelColor = Colors.purple;
+                                    CustomerInformation.data = CustomerInformation.defaultData;
+                                  }
+                                  if(cardController.value.text.length > 10 ){
+                                    cardLabel = "Search Query";
+                                  }
+                                  setState(() {
+                                    
+                                  });
+                                },
+                                style: const TextStyle(fontSize: 14),
                                 controller: cardController,
-                                decoration: const InputDecoration(
+                                decoration:  InputDecoration(
+                                    focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(color: labelColor, width: 2.0),
+                                    ),
+                                  suffixIcon: isSearching? Padding(
+                                    padding: const EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                                    child: Container( transform:Matrix4.translationValues(10, 5, 0), width: 10, height:10,child: const CircularProgressIndicator(strokeWidth: 2.0 )),
+                                  ): const SizedBox(),
                                   label: Text(
-                                    "Card Number",
+                                    cardLabel,
                                     textAlign: TextAlign.right,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         textBaseline: TextBaseline.alphabetic),
-                                  ),labelStyle: TextStyle(fontSize: 12)
+                                  ),labelStyle: TextStyle(fontSize: 12, color: labelColor)
                                 ),
                               ),
                             ),
@@ -263,7 +315,9 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                             icon: FaIcon( Icons.search,
                                 size: 20,
                                 color: isHover[4] ? Colors.purple : defaultColor = Colors.white),
-                            onPressed: () {},
+                            onPressed: () {
+                              searchFunction( cardController.text);
+                            },
                             onHover: (state) {
                               isHover[4] = state;
                               setState(() {});
@@ -276,7 +330,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                             ),
                             style: ElevatedButton.styleFrom(
                               alignment: Alignment.centerLeft,
-                              fixedSize: const Size(120, 38),
+                              fixedSize: const Size(100, 38),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
                               backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
                             ),
@@ -288,23 +342,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Expanded(
                             flex: 3,
-                            child: DropdownButton(
-                              isExpanded: false,
-                              value: "2314568798  Blessing",
-                              items: [
-                                "2314568798  Blessing",
-                                "Card2",
-                                "Card3",
-                                "Card4"
-                              ].map((item) => DropdownMenuItem<String>(
-                                        value: item,
-                                        child: Text(item),
-                                      ))
-                                  .toList(),
-                              onChanged: (string) {
-                                print("string $string");
-                              },
-                            ),
+                            child: searchCombo(comboData.isNotEmpty? "Search Result": "No Result", comboData.keys.toList()),
                           ),
                           const SizedBox(
                             width: 10,
@@ -359,7 +397,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Expanded(
                             child: SizedBox(
                               height: screenSize.width * 0.11 - 50,
-                              child: accountInformation(true),
+                              child: accountInformation(isUpdating),
                             ),
                           ),
                         ],
@@ -371,9 +409,12 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     left: screenSize.width * 0.1,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        child: Text('Update Card'),
+                      child: Visibility(
+                        visible: CustomerInformation.data["Name"] != "" || cardLabel == "Card Not Found",
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          child: Text(cardLabel == "Card Number"? "Update Card":"Add Card"),
+                        ),
                       ),
                     ),
                   ),
@@ -404,7 +445,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                               Flexible(
                                   flex: 14,
                                   child: Text(
-                                    "CONTRIBUTION",
+                                    CustomerInformation.data["CardType"],
                                     style: labelStyle,
                                   )),
                             ],
@@ -425,7 +466,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                               Flexible(
                                 flex: 13,
                                 child: Text(
-                                  "250. FOODSTUFF STAGE 15",
+                                  CustomerInformation.data["CardPackage"],
                                   style: labelStyle,
                                 ),
                               ),
@@ -446,7 +487,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                               Flexible(
                                   flex: 13,
                                   child: Text(
-                                    "250",
+                                    CustomerInformation.data["Amount"].toString(),
                                     style: labelStyle,
                                   )),
                             ],
@@ -466,7 +507,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                               Flexible(
                                   flex: 8,
                                   child: Text(
-                                    "4 Months",
+                                    CustomerInformation.data["Period"],
                                     style: labelStyle,
                                   )),
                             ],
@@ -492,19 +533,20 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 10,
-                                  child: Text(
-                                    "Total Amount Payable:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 1, child: Container()),
-                              Flexible(
-                                  flex: 6,
-                                  child: Text(
-                                    "62,000",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Total Amount Payable:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+                                CustomerInformation.data["TotalAmtPayable"].toString(),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -512,19 +554,20 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 12,
-                                  child: Text(
-                                    "Total Amount Paid:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 2, child: Container()),
-                              Flexible(
-                                  flex: 5,
-                                  child: Text(
-                                    "10,000",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Total Amount Paid:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+                                CustomerInformation.data["TotalAmtPaid"].toString(),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -532,20 +575,21 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 8,
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Last Mark:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Center(
                                   child: Text(
-                                    "Last Mark:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 2, child: Container()),
-                              Flexible(
-                                  flex: 5,
-                                  child: Center(
-                                      child: Text(
-                                    "21/03/2023",
-                                    style: labelStyle,
-                                  ))),
+                                    CustomerInformation.data["LastMark"],
+                                style: labelStyle,
+                              )),
                             ],
                           ),
                           const SizedBox(
@@ -553,66 +597,92 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 8,
-                                  child: Text(
-                                    "Balance: ",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 4, child: Container()),
-                              Flexible(
-                                  flex: 5,
-                                  child: Text(
-                                    "10,000",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Balance: ",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+                                CustomerInformation.data["TotalBalRem"].toString(),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
                             height: 15,
                           ),
-                          Row(
-                            children: [
-                              Flexible(
-                                  flex: 10,
-                                  child: Text(
-                                    "Last Audit: ",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 4, child: Container()),
-                              Flexible(
-                                  flex: 5,
-                                  child: Text(
-                                    "01/04/2023",
-                                    style: labelStyle,
-                                  )),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Container(
+                          SizedBox(
                               width: screenSize.width * 0.17,
-                              child: const GradientProgressBar(
-                                  value: 0.5, height: 20)),
+                              child:  GradientProgressBar(
+                                  value:  CustomerInformation.data["Percentage"], height: 20)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: screenSize.height * 0.62,
+                    left: 20,
+                    child: Container(
+                      width: screenSize.width * 0.25,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "OTHER INFORMATION",
+                            style: headerStyle,
+                          ),
                           const SizedBox(
                             height: 5,
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 10,
-                                  child: Text(
-                                    "Last Pay Date:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 3, child: Container()),
-                              Flexible(
-                                  flex: 5,
-                                  child: Text(
-                                    "01/04/2023",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Last Pay Amount:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+                                CustomerInformation.data["LastPayAmt"].toString(),
+                                style: labelStyle,
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(
+                            height: 5,
+                          ),
+
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Last Pay Date:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+
+                                CustomerInformation.data["LastDate"] == ""? "":
+                                dateFormat.format(CustomerInformation.data["LastDate"]),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -620,19 +690,22 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 9,
-                                  child: Text(
-                                    "Last Pay Amount:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 2, child: Container()),
-                              Flexible(
-                                  flex: 6,
-                                  child: Text(
-                                    "6000",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Last Audit: ",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+
+                                CustomerInformation.data["LastAudit"] == ""? "":
+                                dateFormat.format(CustomerInformation.data["LastAudit"]),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -640,19 +713,21 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 9,
-                                  child: Text(
-                                    "Last Cleared Date:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 2, child: Container()),
-                              Flexible(
-                                  flex: 6,
-                                  child: Text(
-                                    " 14/01/2023",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Last Cleared Date:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+                                CustomerInformation.data["LastClearedDate"] == ""? "":
+                                dateFormat.format(CustomerInformation.data["LastClearedDate"]),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -660,19 +735,22 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Row(
                             children: [
-                              Flexible(
-                                  flex: 9,
-                                  child: Text(
-                                    "Start New:",
-                                    style: labelStyle,
-                                  )),
-                              Flexible(flex: 2, child: Container()),
-                              Flexible(
-                                  flex: 6,
-                                  child: Text(
-                                    " 14/01/2023",
-                                    style: labelStyle,
-                                  )),
+                              SizedBox(
+                                width: screenSize.width * 0.11,
+                                child: Text(
+                                  "Start Date:",
+                                  style: labelStyle,
+                                ),
+                              ),
+                              SizedBox(
+                                width: screenSize.width * 0.02,
+                              ),
+                              Text(
+
+                                CustomerInformation.data["StartDate"] == ""? "":
+                                dateFormat.format(CustomerInformation.data["StartDate"]),
+                                style: labelStyle,
+                              ),
                             ],
                           ),
                           const SizedBox(
@@ -706,11 +784,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
           Positioned(
               left: screenSize.width * 0.48,
               top: 40,
-              child: Container(
-                  width: screenSize.width * 0.45,
+              child: SizedBox(
+                  width: screenSize.width * 0.44,
                   height: screenSize.height - 150,
-                  // child: bodyData2(screenSize)
-                child:   TableClass(),
+                child: TableClass(),
 
 
                   //
@@ -719,8 +796,44 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
       ),
     );
   }
+  static Map<String, Map<String, dynamic>> comboData = {};
 
-  static List<Map<String, dynamic>> returnData = [];
+  void searchFunction(String query) async{
+     isSearching = true;
+     print("Query $query");
+     setState(() {});
+     comboData = await MainClass.searchCustomerInfo(query.toLowerCase());
+     isSearching = false;
+     searchView = true;
+
+     setState(() {});
+
+   }
+
+  Widget searchCombo(String hint, List<String> items){
+     return Visibility(
+       visible: searchView,
+       child: DropdownButton(
+         isExpanded: false,
+         hint: Text(hint),
+         value: null,
+         items: items.map((item) => DropdownMenuItem<String>(
+           value: item,
+           child: Text(item),
+         ))
+             .toList(),
+         onChanged: (string) {
+           print("string $string");
+           CustomerInformation.data = comboData[string]!;
+           cardController.text =  CustomerInformation.data["CardNo"];
+           cardLabel = "Card Number";
+           setState(() {});
+         },
+       ),
+     );
+  }
+
+
   static String lastCard = "";
 
   List<DataColumn> selectedColumns = [];
@@ -728,86 +841,9 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   List<DataCell>  availableCells = [];
 
 
-  void clearUI() {
-    profile = const Image(
-      image: AssetImage('assets/images/placeholder.jpg'),
-      fit: BoxFit.cover,
-    );
-    isProfile = 0;
-    // name = "";
-    // phone = "";
-    // address = "";
-    // date = "";
-    name = "Chukwuedo James";
-    phone = "08142605775";
-    address = "CS 60 CornerStone Plaza, Alaba Int'l Market Ojo Lagos";
-    date = "11/10/2022";
-    cardPackage = "Card No";
-
-    lastMark = "";
-    payAmount = 0;
-    payDate = "";
-    collectedBy = "";
-    progress = 0.0;
-
-    lastMark2 = "";
-    payAmount2 = 0;
-    payDate2 = "";
-    collectedBy2 = "";
-  }
-
-  void setUI(List<String> data) {
-    // Name,Address,Phone,DateOfReg,LastMark,LastPayAmount,LastPayDate,CollectedBy,CardPackage,TotalAmtPayable,TotalAmtPaid, Photo,
-    if (data.isNotEmpty) {
-      isProfile = int.parse(data[12]);
-      profile = isProfile > 0
-          ? const Image(
-              image: AssetImage('assets/images/profile.jpg'),
-              fit: BoxFit.cover,
-            )
-          : const Image(
-              image: AssetImage('assets/images/placeholder.jpg'),
-              fit: BoxFit.cover,
-            );
-
-      name = data[0];
-      address = data[1];
-      phone = data[2];
-      date = data[3];
-
-      //Payment Information Variables
-      lastMark = data[4];
-      payAmount = int.parse(data[5]);
-      try {
-        payDate = MainClass.userFormat.format(DateTime.parse(data[6]));
-      } catch (e) {
-        payDate = (data[6]);
-      }
-
-      collectedBy = data[7];
-      cardPackage = data[8];
-      totalAmtPayable = int.parse(data[10]);
-      totalAmtPaid = int.parse(data[11]);
-      rate = int.parse(data[13]);
-
-      progress = totalAmtPaid / totalAmtPayable;
-      progress = progress > 1
-          ? 0
-          : totalAmtPayable == totalAmtPaid
-              ? 1
-              : progress;
-      //Update Payment Information Variables
-      payAmount2 = _amount;
-      payDate2 = MainClass.userFormat.format(DateTime.now());
-      collectedBy2 = MainClass.staff;
-    } else {
-      clearUI();
-    }
-    setState(() {});
-  }
 
   Widget accountInformation(bool editable) {
-    if (!editable) {
+    if (editable) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -853,28 +889,34 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            MainClass.returnTitleCase(name),
+            MainClass.returnTitleCase(stringify(CustomerInformation.data["Name"])),
             style: TextStyle(color: Colors.purple[900]),
           ),
           Text(
-            phone,
+            CustomerInformation.data["Phone"],
             style: const TextStyle(color: Colors.black),
           ),
           SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Text(
-                MainClass.returnTitleCase(address),
+                MainClass.returnTitleCase( stringify(CustomerInformation.data["Address"])),
                 style: const TextStyle(color: Colors.black),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               )),
           Text(
-            date,
+            CustomerInformation.data["DateOfReg"] == ""? "":
+            dateFormat.format(CustomerInformation.data["DateOfReg"]),
             style: const TextStyle(color: Colors.black),
           ),
         ],
       );
     }
+  }
+
+  String stringify(dynamic data){
+    String string = data.toString();
+    return string;
   }
 
   Widget customButton(
@@ -923,56 +965,42 @@ class TableClass extends StatefulWidget {
 }
 
 class _TableClassState extends State<TableClass> {
-   void setAvailableColumns(){
-     print("Setting Available Columns  ${tableColumns.keys}");
-     availableColumns = [];
-     var mapEntries = tableColumns.entries.toList()
-       ..sort((a, b) => a.value.compareTo(b.value));
 
-     tableColumns
-       ..clear()
-       ..addEntries(mapEntries);
+   List<DataColumn> selectedColumns = [];
 
+   List<DataColumn> availableColumns = [];
 
-     for (var element in tableColumns.keys) {
-       availableColumns.add(
-           DataColumn2(
-             label:  Center(child: Text(element)),
-             size: element == "No"? ColumnSize.S : ColumnSize.M,
-             onSort: (_, __) {
-             },
-           )
-       );
-     }
+   List<DataCell>  availableCells = [];
 
-   }
-   List<DataCell> setAvailableCells(e){
-     print("Setting Available Cells");
-     availableCells = [];
+   late Future<List<Map<String, dynamic>>> futureData;
 
-     for (var element in tableColumns.keys) {
-       availableCells.add(
-         DataCell(
-           Center(child: Text('${e["Method"]}')),
-         ),
-       );
-     }
+   List<bool> editable = [];
 
+   @override
+   void initState() {
+     futureData = TableClass.loadPayment("card");
+     futureData.then((value) => {
+       editable = List.generate(value.length, (index) => false)
+     });
+    super.initState();
+  }
 
-     return availableCells;
-   }
 
   @override
   Widget build(BuildContext context) {
-    print("Undisturbed is built");
     Size size = MediaQuery.of(context).size;
     setAvailableColumns();
+
     return FutureBuilder(
-      future: TableClass.loadPayment("card"),
+      future: futureData,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
+
           return const Center(child: CircularProgressIndicator());
         } else {
+          print("Operator Data............ ");
+          editable = List.generate(snapshot.data!.length, (index) => false);
+          print(editable);
           return Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -990,20 +1018,13 @@ class _TableClassState extends State<TableClass> {
     );
   }
 
-  List<DataColumn> selectedColumns = [];
-
-  List<DataColumn> availableColumns = [];
-
-  List<DataCell>  availableCells = [];
-
   Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
     bool enabled = false;
     dataTableShowLogs = false;
-    return Container(
+
+    return SizedBox(
       width: size.width * 0.45,
       child: DataTable2(
-          sortColumnIndex: 0,
-          sortAscending: true,
           headingTextStyle:  const TextStyle(backgroundColor: Colors.purple),
           headingRowColor: MaterialStateProperty.all(Colors.purple),
           border: const TableBorder(
@@ -1022,15 +1043,137 @@ class _TableClassState extends State<TableClass> {
           columns: availableColumns,
           rows: payment
               .map((e) => DataRow(
-              selected: e["Method"] == "pos",
-              onSelectChanged: (val) {
-              },
               cells: setAvailableCells(e)))
               .toList()),
     );
   }
 
+   void setAvailableColumns(){
+     availableColumns = [];
+     var mapEntries = tableColumns.entries.toList()
+       ..sort((a, b) => a.value.compareTo(b.value));
+     tableColumns
+       ..clear()
+       ..addEntries(mapEntries);
 
+     for (var element in tableColumns.keys) {
+       availableColumns.add(
+           DataColumn2(
+             label:  Center(child: Text(element)),
+             size: element == "No"? ColumnSize.S : ColumnSize.M,
+             onSort: (_, __) {
+             },
+           )
+       );
+     }
+
+   }
+   List<DataCell> setAvailableCells(e){
+     print("Setting Available Cells");
+     availableCells = [];
+     for (var element in tableColumns.keys) {
+       switch(element){
+         case "No": element = "index";
+         break;
+         case "TotalPaid": element = "Total";
+         break;
+         case "CollectedBy": element = "Staff";
+         break;
+
+       }
+
+       bool x =false;
+
+
+       availableCells.add(
+         element == "Amount"?  DataCell(
+             StatefulBuilder(builder: (context, setState){
+               return GestureDetector(
+                 onDoubleTap: () {
+                   print('onSubmited enabled');
+                   editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
+                   print( editable[int.parse("${e["index"]}") -1]);
+                   setState((){});
+                 },
+                 child: Center(
+                   child: TextFormField(
+
+                     enabled: editable[int.parse("${e["index"]}") -1],
+                     autofocus: true,
+                     textAlign: TextAlign.center,
+                     initialValue: "${e["Amount"]}",
+                     keyboardType: TextInputType.text,
+                     textAlignVertical: editable[int.parse("${e["index"]}") -1] ? TextAlignVertical.center : TextAlignVertical.top,
+
+                     onFieldSubmitted: (val) {
+                       print('onSubmited $val');
+                       editable[int.parse("${e["index"]}") -1] = false;
+                       setState((){});
+                     },
+                     decoration: InputDecoration(
+                       border: InputBorder.none,
+                           prefixIcon: editable[int.parse("${e["index"]}") -1] ? const Icon(Icons.edit, size: 15,) : null,
+                         suffixIcon: editable[int.parse("${e["index"]}") -1] ? const Icon(Icons.delete_forever, color: Color(0xffaa0000), size: 18,) : null,
+                         enabledBorder: const OutlineInputBorder(
+                           gapPadding: 1.0,
+                           borderSide: BorderSide(color: Colors.purpleAccent, width: 1.0),
+                         ),
+                         contentPadding: EdgeInsets.zero,
+                         focusedBorder: const UnderlineInputBorder(
+                           borderSide: BorderSide(color: Colors.purple, width: 1.0),
+                         )
+
+                     ),
+                   ),
+                 ),
+               );}
+             ),
+             showEditIcon: editable[int.parse("${e["index"]}") -1]):
+         element == "Method"?
+         DataCell(
+             StatefulBuilder(builder: (context, setState){
+               return GestureDetector(
+                 onDoubleTap: () {
+                   print('onSubmited enabled');
+                   editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
+                   setState((){});
+                 },
+                 child: Center(
+                   child: editable[int.parse("${e["index"]}") -1] ? DropdownButton(
+                     isExpanded: false,
+                     value: "${e["Method"]}",
+                     items: [
+                       "Cash",
+                       "Transfer",
+                     ].map((item) => DropdownMenuItem<String>(
+                       value: item,
+                       child: Text(item),
+                     ))
+                         .toList(),
+                     onChanged: (string) {
+                       print("string $string");
+                       editable[int.parse("${e["index"]}") -1] = false;
+                       setState((){});
+                     },
+                     // onChanged: null,
+                   ) : Text('${e[element]}'),
+                 ),
+               );}
+             ),
+             showEditIcon: false):
+         DataCell(
+           Center(child:
+           Text(
+               element == "Date"? dateFormat.format(DateTime.parse('${e["Date"]}')) : '${e[element]}'
+           )
+           ),
+         ),
+       );
+     }
+
+
+     return availableCells;
+   }
 }
 
 class CheckboxWithLabel extends StatefulWidget {
@@ -1038,19 +1181,18 @@ class CheckboxWithLabel extends StatefulWidget {
   final Function(bool isChecked) onChanged;
   final List<String> selected;
 
-  CheckboxWithLabel({
+  const CheckboxWithLabel({super.key,
     required this.label,
     required this.onChanged,
     required this.selected
   });
 
   @override
-  _CheckboxWithLabelState createState() => _CheckboxWithLabelState();
+  CheckboxWithLabelState createState() => CheckboxWithLabelState();
 }
 
-class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
+class CheckboxWithLabelState extends State<CheckboxWithLabel> {
   bool _isChecked = true;
-
   int getPosition(columnName){
     int position = 0;
     switch(columnName){
@@ -1060,16 +1202,19 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
       break;
       case "Amount": position = 2;
       break;
-      case "LastMark": position = 3;
+      case "Method": position = 3;
       break;
-      case "TotalPaid": position = 4;
+      case "LastMark": position = 4;
+      break;
+      case "TotalPaid": position = 5;
       break;
       case "CollectedBy": position = 5;
       break;
-      case "Verified": position = 6;
+      case "RegisteredBy": position = 6;
+      break;
+      case "Verified": position = 7;
       break;
     }
-
     return position;
   }
 
@@ -1084,6 +1229,7 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
         });
       },
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(widget.label),
           Checkbox(
@@ -1097,37 +1243,34 @@ class _CheckboxWithLabelState extends State<CheckboxWithLabel> {
                }else{
                  tableColumns.remove(widget.label);
                }
-                _isChecked = value!;
+                _isChecked = value;
                 widget.onChanged(_isChecked);
               });
             },
           ),
-
         ],
       ),
     );
   }
 }
 
+List<String> _selectedItems2 =  tableColumns.keys.toList();
 class DropdownCheckbox extends StatefulWidget {
   final List<String> options;
   final Function update;
 
-  DropdownCheckbox({required this.options, required this.update});
+  const DropdownCheckbox({super.key, required this.options, required this.update});
 
   @override
-  _DropdownCheckboxState createState() => _DropdownCheckboxState();
+  DropdownCheckboxState createState() => DropdownCheckboxState();
 }
 
-List<String> _selectedItems2 =  tableColumns.keys.toList();
-
-
-class _DropdownCheckboxState extends State<DropdownCheckbox> {
+class DropdownCheckboxState extends State<DropdownCheckbox> {
   late final GlobalKey<FormFieldState> _key = GlobalKey<FormFieldState>();
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 200,
+      width: 100,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1141,16 +1284,12 @@ class _DropdownCheckboxState extends State<DropdownCheckbox> {
                   label: value,
                   onChanged: (bool isChecked) {
                     setState(() {
-                      if (isChecked) {
-                        _selectedItems2.add(value);
-                      } else {
-                        _selectedItems2.remove(value);
-                      }
+                      isChecked? _selectedItems2.add(value): _selectedItems2.remove(value);
                       widget.update.call();
                       _key.currentState?.reset();
                     });
                   },
-                  selected:   _selectedItems2,
+                  selected:  _selectedItems2,
                 ),
               );
             }).toList(),

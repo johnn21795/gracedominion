@@ -40,18 +40,20 @@ class _MainInterfaceState extends State<MainInterface> {
               color: Colors.purple[400],
               width: 125,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Grace Dominion Success", textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12,
-                          color: Colors.purple[800],
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.none,
-                          fontFamily: 'BlackChy'),),
+                  Container(
+                    color: Colors.purple[500],
+                    height: 50,
+                    child: Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text("Welcome", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Copper", fontSize: 18, color: Colors.white70),),
+                        Text("James", textAlign: TextAlign.center, style: TextStyle(fontFamily: "claredon", fontSize: 15, color: Colors.white54),),
+                      ],
+                    )),
                   ),
-                  const SizedBox(height: 5,),
+                  Container(height: 5, color: Colors.white60,),
                   WidgetClass.mainNavigationButton(isHover[0], "Dashboard", FontAwesomeIcons.desktop,
                           (state) { isHover[0] = state;setState(() {});},
                           (){activePage = "Dashboard"; page = const OperatorDashboard(); setState(() {});}
@@ -161,7 +163,7 @@ class _MainInterfaceState extends State<MainInterface> {
                     fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Claredon'),),
             ),
             Text(
-              "Operator",  textAlign: TextAlign.end,
+              "Junior Manager",  textAlign: TextAlign.end,
               style: TextStyle( color: Colors.grey,
                 fontSize: 13,),),
           ],

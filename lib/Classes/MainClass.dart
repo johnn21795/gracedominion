@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:grpc/grpc.dart';
 
 import 'DatabaseClass.dart';
 import 'ModelClass.dart';
@@ -225,9 +226,49 @@ class MainClass{
       count+=1;
     }
     print(returnData);
-
     return returnData;
+  }
+  static Future<Map<String, dynamic>> loadCustomerInfo(String card) async{
+    Map<String, dynamic> returnData = {};
+    final DocumentReference  customerData  = Firestore.instance.collection("Customers").document(card);
+    try {
+       var thirdValue = await customerData.get();
+       returnData = thirdValue.map;
+    } on GrpcError catch (e) {
+     returnData.putIfAbsent("error", () => e);
+    } catch(e){
+      print('Caught normal error: $e');
+    }
 
+    print("return data $returnData");
+    return returnData;
+  }
+
+  static Future<Map<String, Map<String, dynamic>>> searchCustomerInfo(String query) async{
+    Map<String, Map<String, dynamic>> returnData = {};
+    List<Document> searchResult = [];
+    var customerData  = Firestore.instance.collection("Customers").where("Name", isGreaterThanOrEqualTo: query).where("Name", isLessThanOrEqualTo: '$query\uf8ff');
+    searchResult.addAll(await customerData.get());
+    customerData  = Firestore.instance.collection("Customers").where("Phone", isGreaterThanOrEqualTo: query).where("Phone", isLessThanOrEqualTo: '$query\uf8ff');
+    searchResult.addAll(await customerData.get());
+    customerData  = Firestore.instance.collection("Customers").where("Address", isGreaterThanOrEqualTo: query).where("Address", isLessThanOrEqualTo: '$query\uf8ff');
+    searchResult.addAll(await customerData.get());
+    customerData  = Firestore.instance.collection("Customers").where("CardNo", isGreaterThanOrEqualTo: query).where("CardNo", isLessThanOrEqualTo: '$query\uf8ff');
+    searchResult.addAll(await customerData.get());
+
+    try {
+      for(var element in searchResult){
+        print(element.map);
+        returnData.putIfAbsent("${element.map["CardNo"]}  ${element.map["StaffReg"]}", () => element.map);
+      }
+    } on GrpcError catch (e) {
+      returnData.putIfAbsent("error", () => {"error":e});
+    } catch(e){
+      print('Caught normal error: $e');
+    }
+
+    print("return data $returnData");
+    return returnData;
   }
 
 
