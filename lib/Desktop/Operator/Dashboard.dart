@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Classes/MainClass.dart';
@@ -242,8 +243,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                               child: TextField(
                                 onSubmitted: (query){
                                   searchFunction(query);
+                                  isUpdating = false;
                                 },
                                 onChanged: (card) async {
+                                  isUpdating = false;
                                   if(cardController.value.text.length == 10 ){
                                     isSearching = true;
                                     searchView = false;
@@ -287,9 +290,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                   if(cardController.value.text.length > 10 ){
                                     cardLabel = "Search Query";
                                   }
-                                  setState(() {
-                                    
-                                  });
+                                  setState(() { });
                                 },
                                 style: const TextStyle(fontSize: 14),
                                 controller: cardController,
@@ -412,7 +413,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                       child: Visibility(
                         visible: CustomerInformation.data["Name"] != "" || cardLabel == "Card Not Found",
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            isUpdating = true;
+                            setState(() {});
+                          },
                           child: Text(cardLabel == "Card Number"? "Update Card":"Add Card"),
                         ),
                       ),
@@ -842,28 +846,40 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
 
 
 
+  final nameTextController = TextEditingController(text: CustomerInformation.data["Name"]);
+  final phoneTextController = TextEditingController();
+  final addressTextController = TextEditingController();
+  final dateTextController = TextEditingController();
   Widget accountInformation(bool editable) {
     if (editable) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
+           SizedBox(
             height: 18,
-            child: TextField(),
+            child: TextField(
+              style: TextStyle(fontSize: 16, ),
+              controller: nameTextController,
+            ),
           ),
-          const SizedBox(
+           SizedBox(
             height: 18,
-            child: TextField(),
+            child: TextField(
+              controller: phoneTextController,
+            ),
           ),
-          const SizedBox(
+           SizedBox(
             height: 18,
-            child: TextField(),
+            child: TextField(
+              controller: addressTextController,
+            ),
           ),
           SizedBox(
             height: 30,
             child: TextField(
               readOnly: true,
+              controller: dateTextController,
               decoration: InputDecoration(
                 suffixIcon: GestureDetector(
                   onTap: () {
