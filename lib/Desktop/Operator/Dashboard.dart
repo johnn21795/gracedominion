@@ -844,8 +844,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   List<DataColumn> availableColumns = [];
   List<DataCell>  availableCells = [];
 
-
-
   final nameTextController = TextEditingController(text: CustomerInformation.data["Name"]);
   final phoneTextController = TextEditingController();
   final addressTextController = TextEditingController();
