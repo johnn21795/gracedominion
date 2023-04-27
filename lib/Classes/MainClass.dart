@@ -255,7 +255,6 @@ class MainClass{
     searchResult.addAll(await customerData.get());
     customerData  = Firestore.instance.collection("Customers").where("CardNo", isGreaterThanOrEqualTo: query).where("CardNo", isLessThanOrEqualTo: '$query\uf8ff');
     searchResult.addAll(await customerData.get());
-
     try {
       for(var element in searchResult){
         print(element.map);
@@ -269,6 +268,18 @@ class MainClass{
 
     print("return data $returnData");
     return returnData;
+  }
+
+  static Future<void> updateCustomerInfo(Map<String, dynamic> query) async{
+    try {
+      await Firestore.instance.collection("Customers").document(query["CardNo"]).update(
+          {"Name": query["Name"],"Phone": query["Phone"],"Address": query["Address"],"DateOfReg": query["DateOfReg"], });
+    } on GrpcError catch (e) {
+      print('Caught normal error: $e');
+    } catch(e){
+      print('Caught normal error: $e');
+    }
+
   }
 
 

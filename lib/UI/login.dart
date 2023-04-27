@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bouncing_draggable_dialog/bouncing_draggable_dialog.dart';
 import 'package:firebase_dart/auth.dart';
 import 'package:gracedominion/AppRoutes.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../Classes/MainClass.dart';
-import 'package:bouncing_draggable_dialog/bouncing_draggable_dialog.dart';
+
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -239,10 +240,10 @@ Widget mobileView(){
                         bool isPassword = false;
                         Color color = Colors.white;
                         return StatefulBuilder(builder: (context, setState){
-                          return BouncingDraggableDialog(
+                          return
                             // backgroundColor:  color,
                             // contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                            content: SizedBox(
+                            SizedBox(
                               height: height,
                               width: 500,
                               child: Container(
@@ -304,8 +305,8 @@ Widget mobileView(){
                                   ),
                                 ),
                               ),
-                            ),
-                          );},
+                            )
+                          ;},
                         );
                       },
                     );

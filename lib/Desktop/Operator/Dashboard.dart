@@ -16,6 +16,8 @@ Map<String, int> tableColumnsCopy =   {"No" :0,"Date":1,"Amount":2,"Method":3,"L
 
 List<String> tableColumns2  = const ["No","Date","Amount","Method","LastMark","TotalPaid","CollectedBy","RegisteredBy","Verified"];
 
+Size? screenSize;
+
 class OperatorDashboard extends StatefulWidget {
   const OperatorDashboard({Key? key}) : super(key: key);
 
@@ -132,7 +134,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   }
 
   Widget activePage2(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
+    screenSize = MediaQuery.of(context).size;
     TextStyle labelStyle = const TextStyle(fontSize: 15, letterSpacing: 0.0);
     TextStyle headerStyle = TextStyle(
         fontWeight: FontWeight.bold,
@@ -141,22 +143,22 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
         fontFamily: 'copper');
 
     return Container(
-      width: screenSize.width,
+      width: screenSize!.width,
       child: Stack(
         children: [
           Positioned(
             child: Container(
               color: Colors.white54,
-              width: screenSize.width * 0.48,
-              height: screenSize.height - 50,
+              width: screenSize!.width * 0.48,
+              height: screenSize!.height - 50,
               child: Stack(
                 children: [
                   Positioned(
                     top: 3,
                     left: 4,
                     child: Container(
-                      width: screenSize.width * 0.1,
-                      height: screenSize.width * 0.11,
+                      width: screenSize!.width * 0.1,
+                      height: screenSize!.width * 0.11,
                       decoration: BoxDecoration(
                         border: Border.all(
                             width: 0.5,
@@ -227,9 +229,9 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     ),
                   ),
                   Positioned(
-                    left: screenSize.width * 0.1,
+                    left: screenSize!.width * 0.1,
                     child: Container(
-                      width: (screenSize.width * 0.5 - screenSize.width * 0.1),
+                      width: (screenSize!.width * 0.5 - screenSize!.width * 0.1),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -290,6 +292,12 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                   if(cardController.value.text.length > 10 ){
                                     cardLabel = "Search Query";
                                   }
+                                  nameTextController.text =  CustomerInformation.data["Name"];
+                                 phoneTextController.text =  CustomerInformation.data["Phone"];
+                                  addressTextController.text =  CustomerInformation.data["Address"];
+                                  dateTextController.text =
+                                  CustomerInformation.data["DateOfReg"] == ""? "":
+                                  dateFormat.format(CustomerInformation.data["DateOfReg"]);
                                   setState(() { });
                                 },
                                 style: const TextStyle(fontSize: 14),
@@ -354,9 +362,9 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                   ),
                   Positioned(
                     top: 50,
-                    left: screenSize.width * 0.1,
+                    left: screenSize!.width * 0.1,
                     child: Container(
-                      width: screenSize.width * 0.25,
+                      width: screenSize!.width * 0.25,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -365,7 +373,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                             padding:
                                 const EdgeInsets.only(right: 8.0, left: 8.0),
                             child: SizedBox(
-                              height: screenSize.width * 0.11 - 50,
+                              height: screenSize!.width * 0.11 - 50,
                               child: Column(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceAround,
@@ -397,7 +405,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           ),
                           Expanded(
                             child: SizedBox(
-                              height: screenSize.width * 0.11 - 50,
+                              height: screenSize!.width * 0.11 - 50,
                               child: accountInformation(isUpdating),
                             ),
                           ),
@@ -406,27 +414,103 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     ),
                   ),
                   Positioned(
-                    top: screenSize.height * 0.222,
-                    left: screenSize.width * 0.1,
+                    top: screenSize!.height * 0.222,
+                    left: screenSize!.width * 0.1,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 10.0),
                       child: Visibility(
                         visible: CustomerInformation.data["Name"] != "" || cardLabel == "Card Not Found",
                         child: ElevatedButton(
                           onPressed: () {
-                            isUpdating = true;
+
+                            if(isUpdating){
+                              MainClass.updateCustomerInfo(CustomerInformation.data);
+                              isUpdating = false;
+                            }else{
+                              if(cardLabel != "Card Number"){
+                                showDialog<void>(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  builder: (BuildContext context,) {
+                                    double height = 150;
+                                    bool isPassword = false;
+                                    Color color = Colors.white;
+                                    return AlertDialog(
+                                      content: Container(
+                                        color:Colors.red ,
+                                        child: Container(
+                                          color:Colors.blue ,
+                                          height: 400,
+                                          width: 600,
+                                          child: Column(
+                                            children: [
+                                              const Text("Admindd Password", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Claredon'),),
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              // const Padding(
+                                              //   padding: EdgeInsets.symmetric(horizontal: 15.0),
+                                              //   child: TextField(
+                                              //     obscureText: true,
+                                              //     decoration: InputDecoration(
+                                              //       prefixIcon: Icon(Icons.key),
+                                              //       hintText: "Password",
+                                              //       floatingLabelBehavior: FloatingLabelBehavior.auto,
+                                              //       label: Text(
+                                              //         "Password",
+                                              //         style: TextStyle(
+                                              //           textBaseline: TextBaseline.alphabetic,
+                                              //         ),
+                                              //       ),
+                                              //     ),
+                                              //   ),
+                                              // ),
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              Center(
+                                                child: SizedBox(
+                                                  height: 40,
+                                                  width: 200,
+                                                  child: ElevatedButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        isPassword = true;
+                                                        height = 350;
+                                                        color = const Color(0xBBFFFFFF);
+                                                        Navigator.pop(context);
+                                                      });
+
+
+                                                    },
+                                                    child: const Text("Show Payments"),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }else{
+                                isUpdating = true;
+                              }
+
+                            }
                             setState(() {});
                           },
-                          child: Text(cardLabel == "Card Number"? "Update Card":"Add Card"),
+                          child: Text(cardLabel == "Card Number"?   isUpdating? "Save Changes":"Update Card":"Add Card"),
                         ),
                       ),
                     ),
                   ),
                   Positioned(
-                    top: screenSize.height * 0.35,
-                    left: screenSize.width * 0.28,
+                    top: screenSize!.height * 0.35,
+                    left: screenSize!.width * 0.28,
                     child: Container(
-                      width: screenSize.width * 0.25,
+                      width: screenSize!.width * 0.25,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -521,10 +605,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     ),
                   ),
                   Positioned(
-                    top: screenSize.height * 0.35,
+                    top: screenSize!.height * 0.35,
                     left: 20,
                     child: Container(
-                      width: screenSize.width * 0.25,
+                      width: screenSize!.width * 0.25,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -538,14 +622,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Total Amount Payable:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
                                 CustomerInformation.data["TotalAmtPayable"].toString(),
@@ -559,14 +643,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Total Amount Paid:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
                                 CustomerInformation.data["TotalAmtPaid"].toString(),
@@ -580,14 +664,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Last Mark:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Center(
                                   child: Text(
@@ -602,14 +686,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Balance: ",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
                                 CustomerInformation.data["TotalBalRem"].toString(),
@@ -621,7 +705,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                             height: 15,
                           ),
                           SizedBox(
-                              width: screenSize.width * 0.17,
+                              width: screenSize!.width * 0.17,
                               child:  GradientProgressBar(
                                   value:  CustomerInformation.data["Percentage"], height: 20)),
                         ],
@@ -629,10 +713,10 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     ),
                   ),
                   Positioned(
-                    top: screenSize.height * 0.62,
+                    top: screenSize!.height * 0.62,
                     left: 20,
                     child: Container(
-                      width: screenSize.width * 0.25,
+                      width: screenSize!.width * 0.25,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -646,14 +730,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Last Pay Amount:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
                                 CustomerInformation.data["LastPayAmt"].toString(),
@@ -672,14 +756,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Last Pay Date:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
 
@@ -695,14 +779,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Last Audit: ",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
 
@@ -718,14 +802,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Last Cleared Date:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
                                 CustomerInformation.data["LastClearedDate"] == ""? "":
@@ -740,14 +824,14 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           Row(
                             children: [
                               SizedBox(
-                                width: screenSize.width * 0.11,
+                                width: screenSize!.width * 0.11,
                                 child: Text(
                                   "Start Date:",
                                   style: labelStyle,
                                 ),
                               ),
                               SizedBox(
-                                width: screenSize.width * 0.02,
+                                width: screenSize!.width * 0.02,
                               ),
                               Text(
 
@@ -769,7 +853,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             ),
           ),
           Positioned(
-            left: screenSize.width * 0.49,
+            left: screenSize!.width * 0.49,
             child: Container(
               width: 200,
               height: 50,
@@ -777,7 +861,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             ),
           ),
           Positioned(
-            right: screenSize.width * 0.02 + 20,
+            right: screenSize!.width * 0.02 + 20,
             top: 5,
             child: customButton(
                 isHover[5], "Clear Card", FontAwesomeIcons.broom, (state) {
@@ -786,11 +870,11 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             }, const Size(120, 35)),
           ),
           Positioned(
-              left: screenSize.width * 0.48,
+              left: screenSize!.width * 0.48,
               top: 40,
               child: SizedBox(
-                  width: screenSize.width * 0.44,
-                  height: screenSize.height - 150,
+                  width: screenSize!.width * 0.44,
+                  height: screenSize!.height - 150,
                 child: TableClass(),
 
 
@@ -830,6 +914,12 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
            print("string $string");
            CustomerInformation.data = comboData[string]!;
            cardController.text =  CustomerInformation.data["CardNo"];
+           nameTextController.text =  CustomerInformation.data["Name"];
+           phoneTextController.text =  CustomerInformation.data["Phone"];
+           addressTextController.text =  CustomerInformation.data["Address"];
+           dateTextController.text =
+           CustomerInformation.data["DateOfReg"] == ""? "":
+           dateFormat.format(CustomerInformation.data["DateOfReg"]);
            cardLabel = "Card Number";
            setState(() {});
          },
@@ -844,58 +934,98 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
   List<DataColumn> availableColumns = [];
   List<DataCell>  availableCells = [];
 
-  final nameTextController = TextEditingController(text: CustomerInformation.data["Name"]);
+  final nameTextController = TextEditingController();
   final phoneTextController = TextEditingController();
   final addressTextController = TextEditingController();
   final dateTextController = TextEditingController();
   Widget accountInformation(bool editable) {
     if (editable) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-           SizedBox(
-            height: 18,
-            child: TextField(
-              style: TextStyle(fontSize: 16, ),
-              controller: nameTextController,
-            ),
-          ),
-           SizedBox(
-            height: 18,
-            child: TextField(
-              controller: phoneTextController,
-            ),
-          ),
-           SizedBox(
-            height: 18,
-            child: TextField(
-              controller: addressTextController,
-            ),
-          ),
-          SizedBox(
-            height: 30,
-            child: TextField(
-              readOnly: true,
-              controller: dateTextController,
-              decoration: InputDecoration(
-                suffixIcon: GestureDetector(
-                  onTap: () {
-                    showDatePicker(
-                        firstDate: DateTime.utc(2022),
-                        initialDate: DateTime.now(),
-                        lastDate: DateTime.now(),
-                        context: context);
-                    setState(() {
-                      isButtonDisabled = true;
-                    });
-                  },
-                  child: const Icon(Icons.calendar_month),
+      return FocusScope(
+        child: SizedBox(
+          height: screenSize!.width * 0.11 - 50,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               SizedBox(
+                height: 16,
+                child: TextField(
+                  controller: nameTextController,
+                  style: const TextStyle(fontSize: 15, ),
+                  decoration:  const InputDecoration(
+                      floatingLabelBehavior: FloatingLabelBehavior.never,
+                      label: Text("Name",),
+                  ),
+                  onChanged: (string){
+                    CustomerInformation.data["Name"] = string.toLowerCase();
+                },
+                  textInputAction: TextInputAction.next,
                 ),
               ),
-            ),
+               SizedBox(
+                height: 25,
+                child: TextField(
+                  controller: phoneTextController,
+                  style: const TextStyle(fontSize: 15, ),
+                  decoration:  const InputDecoration(
+                    floatingLabelBehavior: FloatingLabelBehavior.never,
+                    label: Text("Phone"),
+                  ),
+                  onChanged: (string){
+                    CustomerInformation.data["Phone"] = string.toLowerCase();
+                  },
+                  textInputAction: TextInputAction.next,
+
+                ),
+              ),
+               SizedBox(
+                height: 25,
+                child: TextField(
+                  controller: addressTextController,
+                  style: const TextStyle(fontSize: 15, ),
+                  decoration:  const InputDecoration(
+                    floatingLabelBehavior: FloatingLabelBehavior.never,
+                    label: Text("Address"),
+                  ),
+                  onChanged: (string){
+                    CustomerInformation.data["Address"] = string.toLowerCase();
+                  },
+                  textInputAction: TextInputAction.next,
+
+
+
+                ),
+              ),
+              SizedBox(
+                height: 25,
+                child: TextField(
+                  readOnly: true,
+                  controller: dateTextController,
+                  decoration: InputDecoration(
+                    suffixIcon: GestureDetector(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                            firstDate: DateTime.utc(2022),
+                            initialDate: DateTime.now(),
+                            lastDate: DateTime.now(),
+                            context: context);
+                        if (picked != null ) {
+                          setState(() {
+                            CustomerInformation.data["DateOfReg"] = picked;
+                            dateTextController.text =   dateFormat.format(CustomerInformation.data["DateOfReg"]);
+                          });
+                        }
+                      },
+                      child: const Icon(Icons.calendar_month),
+                    ),
+                    floatingLabelBehavior: FloatingLabelBehavior.never,
+                    label: const Text("Date"),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     } else {
       return Column(
