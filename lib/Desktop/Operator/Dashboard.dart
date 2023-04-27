@@ -422,7 +422,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                         visible: CustomerInformation.data["Name"] != "" || cardLabel == "Card Not Found",
                         child: ElevatedButton(
                           onPressed: () {
-
                             if(isUpdating){
                               MainClass.updateCustomerInfo(CustomerInformation.data);
                               isUpdating = false;
@@ -437,58 +436,134 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                     Color color = Colors.white;
                                     return AlertDialog(
                                       content: Container(
-                                        color:Colors.red ,
-                                        child: Container(
-                                          color:Colors.blue ,
-                                          height: 400,
-                                          width: 600,
-                                          child: Column(
-                                            children: [
-                                              const Text("Admindd Password", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Claredon'),),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              // const Padding(
-                                              //   padding: EdgeInsets.symmetric(horizontal: 15.0),
-                                              //   child: TextField(
-                                              //     obscureText: true,
-                                              //     decoration: InputDecoration(
-                                              //       prefixIcon: Icon(Icons.key),
-                                              //       hintText: "Password",
-                                              //       floatingLabelBehavior: FloatingLabelBehavior.auto,
-                                              //       label: Text(
-                                              //         "Password",
-                                              //         style: TextStyle(
-                                              //           textBaseline: TextBaseline.alphabetic,
-                                              //         ),
-                                              //       ),
-                                              //     ),
-                                              //   ),
-                                              // ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Center(
-                                                child: SizedBox(
-                                                  height: 40,
-                                                  width: 200,
-                                                  child: ElevatedButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        isPassword = true;
-                                                        height = 350;
-                                                        color = const Color(0xBBFFFFFF);
-                                                        Navigator.pop(context);
-                                                      });
-
-
-                                                    },
-                                                    child: const Text("Show Payments"),
-                                                  ),
+                                        height: 500,
+                                        width: 550,
+                                        child: Stack(
+                                          children: [
+                                            const Positioned(
+                                               left: 200,
+                                                 child: Text("Register New Customer", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Claredon'),)
+                                             ),
+                                            const SizedBox(
+                                              height: 10,
+                                            ),
+                                            Positioned(
+                                              top: 50,
+                                              child: Container(
+                                                width: 220,
+                                                child: Column(
+                                                  children:[
+                                                    Row(
+                                                      children: [
+                                                        Text("Card No:  "),
+                                                        Text("2345698785", style: TextStyle(fontWeight: FontWeight.bold),),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Text("Account Information"),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    TextField(
+                                                      decoration: InputDecoration(
+                                                        label: Text("Full Name")
+                                                      ),
+                                                    ),
+                                                    TextField(
+                                                      decoration: InputDecoration(
+                                                          hintText: "Phone"
+                                                      ),
+                                                    ),
+                                                    TextField(
+                                                      decoration: InputDecoration(
+                                                          hintText: "Address"
+                                                      ),
+                                                    ),
+                                                    TextField(
+                                                      decoration: InputDecoration(
+                                                          hintText: "Date"
+                                                      ),
+                                                    ),
+                                                  ]
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            Positioned(
+                                              right: 20,
+                                              top: 20,
+                                              child: Container(
+                                                width: 150,
+                                                child: Column(
+                                                    children:[
+                                                  SizedBox(
+                                                      child:
+                                                    DropdownButton<String>(
+                                                      isExpanded: true,
+                                                      hint: const Text("Staff"),
+                                                        items: [
+                                                      "James",
+                                                      "Blessing",
+                                                      "Rachel",
+                                                      "Esther",
+                                                      "Mercy"
+                                                      ].map((item) => DropdownMenuItem<String>(
+                                                        value: "Blessing",
+                                                        child: Text(item),
+                                                      ))
+                                                          .toList(), onChanged: (string){})),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      Text("Card Information"),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextField(
+                                                        decoration: InputDecoration(
+                                                            label: Text("Full Name")
+                                                        ),
+                                                      ),
+                                                      TextField(
+                                                        decoration: InputDecoration(
+                                                            hintText: "Phone"
+                                                        ),
+                                                      ),
+                                                      TextField(
+                                                        decoration: InputDecoration(
+                                                            hintText: "Address"
+                                                        ),
+                                                      ),
+                                                      TextField(
+                                                        decoration: InputDecoration(
+                                                            hintText: "Date"
+                                                        ),
+                                                      ),
+                                                    ]
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 10,
+                                              right:10,
+                                              child: SizedBox(
+                                                height: 40,
+                                                width: 200,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      isPassword = true;
+                                                      height = 350;
+                                                      color = const Color(0xBBFFFFFF);
+                                                      Navigator.pop(context);
+                                                    });
+                                                  },
+                                                  child: const Text("Register Customer"),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     );
