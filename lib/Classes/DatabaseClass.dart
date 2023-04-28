@@ -1,11 +1,16 @@
 
-import 'package:sqflite/sqflite.dart';
+// import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 
 
 class MainDatabase{
   static final MainDatabase instance = MainDatabase();
    bool isNewDatabase = false ;
+   MainDatabase(){
+     sqfliteFfiInit();
+   }
 
   static Database? customerDB;
 
@@ -15,9 +20,14 @@ class MainDatabase{
     return customerDB!;
   }
   Future<Database> _initDB(String filePath) async{
-    final dbPath = await getDatabasesPath();
-    final path = dbPath+filePath;
-    return await openDatabase(path, version: 1, onCreate: createDB);
+    // sqfliteFfiInit();
+    var databaseFactory = databaseFactoryFfi;
+    return  await databaseFactory.openDatabase("C:\\Users\\Public\\Database\\GDS_Alaba Database\\Packages.sqlite");
+  }
+  Future<Database> getDatabase(String name) async{
+    // sqfliteFfiInit();
+    var databaseFactory = databaseFactoryFfi;
+    return  await databaseFactory.openDatabase("C:\\Users\\Public\\Database\\GDS_Alaba Database\\$name.sqlite");
   }
 
   Future createDB(Database db, int version) async{
@@ -30,6 +40,14 @@ class MainDatabase{
     db.execute(sql);
     sql = "CREATE TABLE IF NOT EXISTS Printout (Date String,CardNo String, Amount INTEGER, LastMark STRING, Collected STRING)";
     await db.execute(sql);
+    await db.execute(''' CREATE TABLE IF NOT EXISTS Product (id INTEGER PRIMARY KEY,title TEXT) ''');
+    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
+    await db.insert('Product', <String, Object?>{'title': 'Product 1'});
+
+    var result = await db.query('Product');
+    print(result);
+    // prints [{id: 1, title: Product 1}, {id: 2, title: Product 1}]
+    await db.close();
   }
   Future<int> initialInsertDB(Database db, Map<String, Object?> data) async{
     await db.insert("Customers", data);

@@ -52,6 +52,7 @@ dependencies:
   desktop_multi_window: ^0.2.0
   bouncing_draggable_dialog: ^1.0.2
   data_table_2: ^2.4.1
+  sqflite_common_ffi: ^2.2.4
 
   flutter:
     sdk: flutter

@@ -421,154 +421,18 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                       child: Visibility(
                         visible: CustomerInformation.data["Name"] != "" || cardLabel == "Card Not Found",
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if(isUpdating){
-                              MainClass.updateCustomerInfo(CustomerInformation.data);
+                              await MainClass.updateCustomerInfo(CustomerInformation.data);
                               isUpdating = false;
                             }else{
                               if(cardLabel != "Card Number"){
                                 showDialog<void>(
-                                  context: context,
-                                  barrierDismissible: true,
-                                  builder: (BuildContext context,) {
-                                    double height = 150;
-                                    bool isPassword = false;
-                                    Color color = Colors.white;
-                                    return AlertDialog(
-                                      content: Container(
-                                        height: 500,
-                                        width: 550,
-                                        child: Stack(
-                                          children: [
-                                            const Positioned(
-                                               left: 200,
-                                                 child: Text("Register New Customer", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Claredon'),)
-                                             ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Positioned(
-                                              top: 50,
-                                              child: Container(
-                                                width: 220,
-                                                child: Column(
-                                                  children:[
-                                                    Row(
-                                                      children: [
-                                                        Text("Card No:  "),
-                                                        Text("2345698785", style: TextStyle(fontWeight: FontWeight.bold),),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Text("Account Information"),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    TextField(
-                                                      decoration: InputDecoration(
-                                                        label: Text("Full Name")
-                                                      ),
-                                                    ),
-                                                    TextField(
-                                                      decoration: InputDecoration(
-                                                          hintText: "Phone"
-                                                      ),
-                                                    ),
-                                                    TextField(
-                                                      decoration: InputDecoration(
-                                                          hintText: "Address"
-                                                      ),
-                                                    ),
-                                                    TextField(
-                                                      decoration: InputDecoration(
-                                                          hintText: "Date"
-                                                      ),
-                                                    ),
-                                                  ]
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              right: 20,
-                                              top: 20,
-                                              child: Container(
-                                                width: 150,
-                                                child: Column(
-                                                    children:[
-                                                  SizedBox(
-                                                      child:
-                                                    DropdownButton<String>(
-                                                      isExpanded: true,
-                                                      hint: const Text("Staff"),
-                                                        items: [
-                                                      "James",
-                                                      "Blessing",
-                                                      "Rachel",
-                                                      "Esther",
-                                                      "Mercy"
-                                                      ].map((item) => DropdownMenuItem<String>(
-                                                        value: "Blessing",
-                                                        child: Text(item),
-                                                      ))
-                                                          .toList(), onChanged: (string){})),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Text("Card Information"),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                            label: Text("Full Name")
-                                                        ),
-                                                      ),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                            hintText: "Phone"
-                                                        ),
-                                                      ),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                            hintText: "Address"
-                                                        ),
-                                                      ),
-                                                      TextField(
-                                                        decoration: InputDecoration(
-                                                            hintText: "Date"
-                                                        ),
-                                                      ),
-                                                    ]
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              bottom: 10,
-                                              right:10,
-                                              child: SizedBox(
-                                                height: 40,
-                                                width: 200,
-                                                child: ElevatedButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      isPassword = true;
-                                                      height = 350;
-                                                      color = const Color(0xBBFFFFFF);
-                                                      Navigator.pop(context);
-                                                    });
-                                                  },
-                                                  child: const Text("Register Customer"),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
+                                    context: context,
+                                    barrierDismissible: true,
+                                    builder: (BuildContext context,) {
+                                      return registerCustomer();
+                                    });
                               }else{
                                 isUpdating = true;
                               }
@@ -968,9 +832,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
      comboData = await MainClass.searchCustomerInfo(query.toLowerCase());
      isSearching = false;
      searchView = true;
-
      setState(() {});
-
    }
 
   Widget searchCombo(String hint, List<String> items){
@@ -1000,6 +862,142 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
          },
        ),
      );
+  }
+
+
+  Widget registerCustomer()  {
+    return  AlertDialog(
+          content: Container(
+            height: 500,
+            width: 550,
+            child: Stack(
+              children: [
+                const Positioned(
+                    left: 200,
+                    child: Text("Register New Customer", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Claredon'),)
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Positioned(
+                  top: 50,
+                  child: Container(
+                    width: 220,
+                    child: Column(
+                        children:[
+                          Row(
+                            children: const [
+                              Text("Card No:  "),
+                              Text("2345698785", style: TextStyle(fontWeight: FontWeight.bold),),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          const Text("Account Information"),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          TextField(
+                            decoration: InputDecoration(
+                                label: Text("Full Name")
+                            ),
+                          ),
+                          const TextField(
+                            decoration: InputDecoration(
+                                hintText: "Phone"
+                            ),
+                          ),
+                          const TextField(
+                            decoration: InputDecoration(
+                                hintText: "Address"
+                            ),
+                          ),
+                          const TextField(
+                            decoration: InputDecoration(
+                                hintText: "Date"
+                            ),
+                          ),
+                        ]
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 20,
+                  top: 20,
+                  child: Container(
+                    width: 150,
+                    child: Column(
+                        children:[
+                          SizedBox(
+                              child:
+                              DropdownButton<String>(
+                                  isExpanded: true,
+                                  hint: const Text("Staff"),
+                                  items: [
+                                    "James",
+                                    "Blessing",
+                                    "Rachel",
+                                    "Esther",
+                                    "Mercy"
+                                  ].map((item) => DropdownMenuItem<String>(
+                                    value: item,
+                                    child: Text(item),
+                                  ))
+                                      .toList(), onChanged: (string){})),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Text("Card Information"),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          TextField(
+                            decoration: InputDecoration(
+                                label: Text("Full Name")
+                            ),
+                          ),
+                          TextField(
+                            decoration: InputDecoration(
+                                hintText: "Phone"
+                            ),
+                          ),
+                          TextField(
+                            decoration: InputDecoration(
+                                hintText: "Address"
+                            ),
+                          ),
+                          TextField(
+                            decoration: InputDecoration(
+                                hintText: "Date"
+                            ),
+                          ),
+                        ]
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 10,
+                  right:10,
+                  child: SizedBox(
+                    height: 40,
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          MainClass.loadSQLPackageInformation();
+                          Navigator.pop(context);
+                        });
+                      },
+                      child: const Text("Register Customer"),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
   }
 
 
@@ -1066,9 +1064,6 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     CustomerInformation.data["Address"] = string.toLowerCase();
                   },
                   textInputAction: TextInputAction.next,
-
-
-
                 ),
               ),
               SizedBox(

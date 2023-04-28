@@ -59,9 +59,6 @@ class MainClass{
     }
     return result;
   }
-
-
-
   static String returnCommaValue(String text){
     String result = "N";
     if(text.length == 3){
@@ -88,7 +85,6 @@ class MainClass{
     "31/09/"+DateTime.now().year.toString()+"",
     "31/11/"+DateTime.now().year.toString()+"",
   ];
-
   static Future<void> getTodayBalance(DateTime selectedDate)async {
     // var result = await MainClass.readDB("SELECT SUM(Amount) FROM Printout WHERE Date = ?", [MainClass.format2.format(selectedDate)]);
     todayBalance =0;
@@ -149,12 +145,6 @@ class MainClass{
     result == null ? isTrue = false: result.isEmpty?isTrue = false: isTrue = true;
     return isTrue;
   }
-  // static Future<int> getInt(String sql, List<Object> arguments) async{
-  //   var result =  await currentDb.readDB(sql, MainDatabase.customerDB!, arguments);
-  //   bool isTrue = false;
-  //   result == null ? isTrue = false: result.isEmpty?isTrue = false: isTrue = true;
-  //   return isTrue;
-  // }
   static Future<Map<String, String>> getString(String sql, List<Object> arguments) async{
     var callback =  await currentDb.readDB(sql, MainDatabase.customerDB!, arguments);
     Map<String, String>? result = HashMap<String,String>();
@@ -173,7 +163,7 @@ class MainClass{
     newCardList.putIfAbsent("Savings", () => newSavingsCards[0]);
   }
   static Future<void> loadAppInformation() async {
-    getExternalStorageDirectory().then((value) => {customerImagesPath = "${value?.parent.parent.parent.parent.path}/.GraceDominion/CustomerImages/" });
+    // getExternalStorageDirectory().then((value) => {customerImagesPath = "${value?.parent.parent.parent.parent.path}/.GraceDominion/CustomerImages/" });
     await currentDb.database.then((value) => {
       if(currentDb.isNewDatabase){
         for (var element in MyTestData.randomData) {
@@ -193,9 +183,21 @@ class MainClass{
     });
   }
 
+  static Future<void> loadSQLPackageInformation() async {
+    await currentDb.database.then((value) => {
+        currentDb.readDB("SELECT Distinct Name,Amount,Total FROM Contribution",  MainDatabase.customerDB!, []).then((value) => {
+          MainClass.contributionPackages = value, print("value $value"), addPackageFromSql(value!, "CONTRIBUTION") } ),
+      currentDb.readDB("SELECT Distinct Name,Amount,Total FROM PROPERTY",  MainDatabase.customerDB!, []).then((value) => {
+        MainClass.contributionPackages = value, print("value $value"), addPackageFromSql(value!, "PROPERTY") } ),
+      currentDb.readDB("SELECT Distinct Name,Amount,Total FROM SAVINGS",  MainDatabase.customerDB!, []).then((value) => {
+        MainClass.contributionPackages = value, print("value $value"), addPackageFromSql(value!, "SAVINGS") } ),
+
+    });
+  }
+
+
   static Future<List<Map<String, dynamic>>?> loadFireBaseAppInformation() async {
     // getExternalStorageDirectory().then((value) => {customerImagesPath = "${value?.parent.parent.parent.parent.path}/.GraceDominion/CustomerImages/" });
-
     final CollectionReference packages  = Firestore.instance.collection("packages");
     var firstValue = await packages.where("CardType", isEqualTo: "CONTRIBUTION").get();
     var secondValue = await  packages.document(firstValue.first.id).collection("Packages").orderBy("Name").get();
@@ -279,8 +281,45 @@ class MainClass{
     } catch(e){
       print('Caught normal error: $e');
     }
-
   }
+
+
+
+  static Future<void> addCustomersFromSql(List<Map<String, dynamic>> packages, String cardType) async{
+    try {
+      for(var element in packages){
+        print("Setting element  ${element["Name"]}");
+        await Firestore.instance.collection("Customers").document(element["CardNo"]).set( element );
+      }
+    } on GrpcError catch (e) {
+      print('Caught normal error: $e');
+    } catch(e){
+      print('Caught normal error: $e');
+    }
+  }
+  static Future<void> addPackageFromSql(List<Map<String, dynamic>> packages, String cardType) async{
+    try {
+      for(var element in packages){
+        print("Setting element  ${element["Name"]}");
+        await Firestore.instance.collection("packages").document(cardType).collection("packages").document(element["Name"]).set(element);
+      }
+      currentDb.readDB("SELECT Name,Item,Quantity,Value FROM $cardType WHERE Item != '' ",  MainDatabase.customerDB!, []).then((value) =>
+      {
+      for(var element in value!){
+          print("updating element  ${element["Name"]}"),
+           Firestore.instance.collection("packages").document(cardType).collection("packages").document(element["Name"].toString()).collection("PackingList").document(element["Item"].toString()).set(
+          {"Item": element["Item"],"Quantity": element["Quantity"],"Value": element["Value"] })
+    },
+      print("Finished")
+      } );
+
+    } on GrpcError catch (e) {
+      print('Caught normal error: $e');
+    } catch(e){
+      print('Caught normal error: $e');
+    }
+  }
+
 
 
 
