@@ -245,6 +245,18 @@ class MainClass{
     print("return data $returnData");
     return returnData;
   }
+  static String cardNoStart(String startDigit) {
+    final startDigitLength = startDigit.length;
+    final remainingDigits = List.filled(10 - startDigitLength, 0);
+    final number = [startDigit, ...remainingDigits];
+    return number.join().padRight(10, '0');
+  }
+  static String cardNoEnd(String startDigit) {
+    final startDigitLength = startDigit.length;
+    final remainingDigits = List.filled(10 - startDigitLength, 9);
+    final number = [startDigit, ...remainingDigits];
+    return number.join().padRight(10, '0');
+  }
 
   static Future<Map<String, Map<String, dynamic>>> searchCustomerInfo(String query) async{
     Map<String, Map<String, dynamic>> returnData = {};
@@ -255,8 +267,13 @@ class MainClass{
     searchResult.addAll(await customerData.get());
     customerData  = Firestore.instance.collection("Customers").where("Address", isGreaterThanOrEqualTo: query).where("Address", isLessThanOrEqualTo: '$query\uf8ff');
     searchResult.addAll(await customerData.get());
-    customerData  = Firestore.instance.collection("Customers").where("CardNo", isGreaterThanOrEqualTo: query).where("CardNo", isLessThanOrEqualTo: '$query\uf8ff');
-    searchResult.addAll(await customerData.get());
+    try {
+      customerData  = Firestore.instance.collection("Customers").where("CardNo", isGreaterThanOrEqualTo: int.parse(cardNoStart(query))).where("CardNo", isLessThanOrEqualTo: int.parse(cardNoEnd(query)));
+      searchResult.addAll(await customerData.get());
+    } catch (e) {
+      print(e);
+    }
+
     try {
       for(var element in searchResult){
         print(element.map);

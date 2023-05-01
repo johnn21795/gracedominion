@@ -8,6 +8,8 @@ import 'package:window_manager/window_manager.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:intl/intl.dart';
 
+import '../../Classes/SQLite_Import.dart';
+
 Color defaultColor = Colors.black45;
 final dateFormat = DateFormat('dd-MM-yyyy');
 Map<String, int> tableColumns =  {};
@@ -28,7 +30,6 @@ class OperatorDashboard extends StatefulWidget {
 Color hoverColor = Colors.yellow;
 
 class _OperatorDashboardState extends State<OperatorDashboard> {
-  final cardTextController = TextEditingController();
   bool isTyping = false;
   bool isAmount = false;
   bool isButtonDisabled = true;
@@ -195,7 +196,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                         fontFamily: "copper",
                                         color: Colors.purple)),
                                 TextSpan(
-                                    text: CustomerInformation.data["Status"],
+                                    text: MainClass.returnTitleCase(CustomerInformation.data["Status"]),
                                     style: TextStyle(
                                         fontSize: 13,
                                         fontFamily: "claredon",
@@ -211,13 +212,13 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                 const TextSpan(
                                     text: 'Staff:  ',
                                     style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontFamily: "copper",
                                         color: Colors.purple)),
                                 TextSpan(
-                                    text: CustomerInformation.data["StaffReg"],
+                                    text: MainClass.returnTitleCase(CustomerInformation.data["StaffReg"]),
                                     style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontFamily: "claredon",
                                         fontWeight: FontWeight.bold,
                                         color: Colors.green[900])),
@@ -252,6 +253,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                   if(cardController.value.text.length == 10 ){
                                     isSearching = true;
                                     searchView = false;
+
                                     setState(() {});
                                   }
                                   if(cardController.value.text.length == 10 ){
@@ -293,11 +295,11 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                     cardLabel = "Search Query";
                                   }
                                   nameTextController.text =  CustomerInformation.data["Name"];
-                                 phoneTextController.text =  CustomerInformation.data["Phone"];
+                                 phoneTextController.text =  stringify(CustomerInformation.data["Phone"]);
                                   addressTextController.text =  CustomerInformation.data["Address"];
-                                  dateTextController.text =
-                                  CustomerInformation.data["DateOfReg"] == ""? "":
-                                  dateFormat.format(CustomerInformation.data["DateOfReg"]);
+                                  dateTextController.text = stringDateFormat(CustomerInformation.data["DateOfReg"]);
+                                  // CustomerInformation.data["DateOfReg"] == ""? "":
+                                  // dateFormat.format(CustomerInformation.data["DateOfReg"]);
                                   setState(() { });
                                 },
                                 style: const TextStyle(fontSize: 14),
@@ -646,7 +648,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                           SizedBox(
                               width: screenSize!.width * 0.17,
                               child:  GradientProgressBar(
-                                  value:  CustomerInformation.data["Percentage"], height: 20)),
+                                  value:  double.parse(CustomerInformation.data["Percentage"].toString()), height: 20)),
                         ],
                       ),
                     ),
@@ -705,9 +707,8 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                 width: screenSize!.width * 0.02,
                               ),
                               Text(
+                                  stringDateFormat(CustomerInformation.data["LastDate"]),
 
-                                CustomerInformation.data["LastDate"] == ""? "":
-                                dateFormat.format(CustomerInformation.data["LastDate"]),
                                 style: labelStyle,
                               ),
                             ],
@@ -728,9 +729,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                 width: screenSize!.width * 0.02,
                               ),
                               Text(
-
-                                CustomerInformation.data["LastAudit"] == ""? "":
-                                dateFormat.format(CustomerInformation.data["LastAudit"]),
+                                stringDateFormat(CustomerInformation.data["LastAudit"]),
                                 style: labelStyle,
                               ),
                             ],
@@ -751,8 +750,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                 width: screenSize!.width * 0.02,
                               ),
                               Text(
-                                CustomerInformation.data["LastClearedDate"] == ""? "":
-                                dateFormat.format(CustomerInformation.data["LastClearedDate"]),
+                                 stringDateFormat(CustomerInformation.data["LastClearedDate"]),
                                 style: labelStyle,
                               ),
                             ],
@@ -773,9 +771,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                 width: screenSize!.width * 0.02,
                               ),
                               Text(
-
-                                CustomerInformation.data["StartDate"] == ""? "":
-                                dateFormat.format(CustomerInformation.data["StartDate"]),
+                                  stringDateFormat(CustomerInformation.data["StartDate"]),
                                 style: labelStyle,
                               ),
                             ],
@@ -829,7 +825,25 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
      isSearching = true;
      print("Query $query");
      setState(() {});
-     comboData = await MainClass.searchCustomerInfo(query.toLowerCase());
+     comboData = await MainClass.searchCustomerInfo(query.toUpperCase());
+     if(comboData.containsKey("error")){
+       var err = comboData["error"]!["error"];
+       switch(err.code.toString()){
+         case "5":
+           cardLabel = "Card Not Found";
+           labelColor = const Color(0xff9b0101);
+           break;
+         case "14":
+           cardLabel = "No Internet Connection";
+           labelColor = const Color(0xffd73d0a);
+           break;
+         case "2":
+           cardLabel = "Slow Connection, retry";
+           labelColor =  const Color(0xffde4e1b);
+           break;
+       }
+       CustomerInformation.data = CustomerInformation.defaultData;
+     }
      isSearching = false;
      searchView = true;
      setState(() {});
@@ -850,13 +864,13 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
          onChanged: (string) {
            print("string $string");
            CustomerInformation.data = comboData[string]!;
-           cardController.text =  CustomerInformation.data["CardNo"];
+           cardController.text =  stringify(CustomerInformation.data["CardNo"]);
            nameTextController.text =  CustomerInformation.data["Name"];
-           phoneTextController.text =  CustomerInformation.data["Phone"];
+           phoneTextController.text =  stringify(CustomerInformation.data["Phone"]);
            addressTextController.text =  CustomerInformation.data["Address"];
-           dateTextController.text =
-           CustomerInformation.data["DateOfReg"] == ""? "":
-           dateFormat.format(CustomerInformation.data["DateOfReg"]);
+           dateTextController.text = stringDateFormat(CustomerInformation.data["DateOfReg"]);
+           // CustomerInformation.data["DateOfReg"] == ""? "":
+           // dateFormat.format(CustomerInformation.data["DateOfReg"]);
            cardLabel = "Card Number";
            setState(() {});
          },
@@ -985,7 +999,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          MainClass.loadSQLPackageInformation();
+                          SQLiteDatabase.loadSQLIncomeInformation("Alaba");
                           Navigator.pop(context);
                         });
                       },
@@ -1107,7 +1121,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
             style: TextStyle(color: Colors.purple[900]),
           ),
           Text(
-            CustomerInformation.data["Phone"],
+            stringify(CustomerInformation.data["Phone"]),
             style: const TextStyle(color: Colors.black),
           ),
           SingleChildScrollView(
@@ -1119,8 +1133,9 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                 maxLines: 1,
               )),
           Text(
-            CustomerInformation.data["DateOfReg"] == ""? "":
-            dateFormat.format(CustomerInformation.data["DateOfReg"]),
+              stringDateFormat(CustomerInformation.data["DateOfReg"]),
+            // CustomerInformation.data["DateOfReg"] == ""? "":
+            // dateFormat.format(CustomerInformation.data["DateOfReg"]),
             style: const TextStyle(color: Colors.black),
           ),
         ],
@@ -1130,6 +1145,20 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
 
   String stringify(dynamic data){
     String string = data.toString();
+    return string;
+  }
+  String stringDateFormat(dynamic data){
+    if(data.toString() == ""){
+      return "";
+    }
+    if(data.toString().contains("-")){
+      return data.toString();
+    }
+    if(data == null){
+      return "";
+    }
+
+    String string = dateFormat.format(data);
     return string;
   }
 
