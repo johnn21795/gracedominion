@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:gracedominion/Desktop/Operator/Dashboard.dart';
-import 'package:gracedominion/Desktop/Operator/MainInterface.dart';
+// import 'package:gracedominion/Desktop/Operator/MainInterface.dart';
+import 'package:gracedominion/Showroom/MainInterface.dart';
 import 'package:gracedominion/Desktop/Splash.dart';
 import 'package:gracedominion/Desktop/WindowsApplication.dart';
 import 'package:gracedominion/UI/FireTest.dart';
@@ -88,6 +89,10 @@ class MyApp extends StatelessWidget {
         //Windows Unique Route
       case AppRoutes.windowsSplash:
         return buildRoute(const Splash(), route:route);
+        //for Dominion
+      // case AppRoutes.operatorDashboard:
+      //   return buildRoute(const MainInterface(), route:route);
+
       case AppRoutes.operatorDashboard:
         return buildRoute(const MainInterface(), route:route);
       default:

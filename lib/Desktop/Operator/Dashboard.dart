@@ -284,6 +284,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                                       }else{
                                         cardLabel = "Card Number";
                                         labelColor =  const Color(0xff258203);
+                                        _TableClassState.loadPayment();
                                       }
                                     }
                                   } else{
@@ -872,6 +873,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
            // CustomerInformation.data["DateOfReg"] == ""? "":
            // dateFormat.format(CustomerInformation.data["DateOfReg"]);
            cardLabel = "Card Number";
+           _TableClassState.loadPayment();
            setState(() {});
          },
        ),
@@ -999,7 +1001,7 @@ class _OperatorDashboardState extends State<OperatorDashboard> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          SQLiteDatabase.loadSQLIncomeInformation("Alaba");
+                          SQLiteDatabase.loadSQLStaffInformation("Alaba");
                           Navigator.pop(context);
                         });
                       },
@@ -1215,17 +1217,24 @@ class _TableClassState extends State<TableClass> {
 
    List<DataCell>  availableCells = [];
 
-   late Future<List<Map<String, dynamic>>> futureData;
+   static late Future<List<Map<String, dynamic>>>? futureData ;
 
-   List<bool> editable = [];
+   static List<bool> editable = [];
 
    @override
    void initState() {
-     futureData = TableClass.loadPayment("card");
-     futureData.then((value) => {
-       editable = List.generate(value.length, (index) => false)
-     });
+     futureData = TableClass.loadPayment(CustomerInformation.data["CardNo"].toString());
+     // futureData!.then((value) => {
+     //   editable = List.generate(value.length, (index) => false)
+     // });
     super.initState();
+  }
+  
+  static void loadPayment(){
+    futureData = null;
+    futureData = TableClass.loadPayment(CustomerInformation.data["CardNo"].toString());
+
+    
   }
 
 
@@ -1241,7 +1250,7 @@ class _TableClassState extends State<TableClass> {
 
           return const Center(child: CircularProgressIndicator());
         } else {
-          print("Operator Data............ ");
+          print("Operator Data............ ${snapshot.data} ");
           editable = List.generate(snapshot.data!.length, (index) => false);
           print(editable);
           return Column(
@@ -1331,6 +1340,9 @@ class _TableClassState extends State<TableClass> {
        availableCells.add(
          element == "Amount"?  DataCell(
              StatefulBuilder(builder: (context, setState){
+               print('Amount ::: ${e["Amount"]} ');
+               final amountController = TextEditingController();
+               amountController.text = "${e["Amount"]}";
                return GestureDetector(
                  onDoubleTap: () {
                    print('onSubmited enabled');
@@ -1343,8 +1355,8 @@ class _TableClassState extends State<TableClass> {
 
                      enabled: editable[int.parse("${e["index"]}") -1],
                      autofocus: true,
+                     controller: amountController,
                      textAlign: TextAlign.center,
-                     initialValue: "${e["Amount"]}",
                      keyboardType: TextInputType.text,
                      textAlignVertical: editable[int.parse("${e["index"]}") -1] ? TextAlignVertical.center : TextAlignVertical.top,
 
@@ -1355,7 +1367,7 @@ class _TableClassState extends State<TableClass> {
                      },
                      decoration: InputDecoration(
                        border: InputBorder.none,
-                           prefixIcon: editable[int.parse("${e["index"]}") -1] ? const Icon(Icons.edit, size: 15,) : null,
+                           // prefixIcon: editable[int.parse("${e["index"]}") -1] ? const Icon(Icons.edit, size: 15,) : null,
                          suffixIcon: editable[int.parse("${e["index"]}") -1] ? const Icon(Icons.delete_forever, color: Color(0xffaa0000), size: 18,) : null,
                          enabledBorder: const OutlineInputBorder(
                            gapPadding: 1.0,

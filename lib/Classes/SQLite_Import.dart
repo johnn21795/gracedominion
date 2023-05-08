@@ -102,11 +102,16 @@ class SQLiteDatabase {
 
   static Future<void> addIncomeFromSql(List<Map<String, dynamic>> packages,String branch ) async{
     try {
+
       for(var element in packages){
         final mapData = Map<String, dynamic>.from(element);
         mapData['Branch'] = branch;
-        await Firestore.instance.collection("Customer").document(element["CardNo"].toString()).collection("Payments").document(element["Date"].toString()).set( element );
+        mapData['Round'] = "CurrentRound";
+        // await Firestore.instance.collection("Customers").document(element["CardNo"].toString()).collection("Payments").document(element["Date"].toString()).set( mapData );
+        await Firestore.instance.collection("Income").document("CurrentRound").collection("Customers").document(element["CardNo"].toString()).set(
+            {"CardNo":element["CardNo"], "CurrentBal":element["CurrentBal"], "CardType":element["CardType"], "CardPackage":element["CardPackage"]});
       }
+      print('Finished: ');
     } catch(e, stackTrace){
       print('Caught normal error: $e');
       print('Stack trace: $stackTrace');
@@ -121,8 +126,9 @@ class SQLiteDatabase {
   static Future<void> addStaffFromSql(List<Map<String, dynamic>> packages,String branch ) async{
     try {
       for(var element in packages){
-        element.putIfAbsent("Branch", () => branch);
-        await Firestore.instance.collection("Users").document(element["Names"]).set( element );
+        final mapData = Map<String, dynamic>.from(element);
+        mapData['Branch'] = branch;
+        await Firestore.instance.collection("Users").document(mapData["Names"]).set( mapData );
       }
     } catch(e){
       print('Caught normal error: $e');
@@ -134,9 +140,14 @@ class SQLiteDatabase {
     try {
       for (int x = DateTime.now().month; x > 0; x--) {
         var month = DateFormat.MMMM().format(DateTime(DateTime.now().year, x));
-        final value = await instance.readDB("SELECT * FROM ${month}2023 WHERE Card not null order by Date ", database, []);
-        addPrintoutFromSql(value!, branch,month );
+        try {
+          final value = await instance.readDB("SELECT * FROM ${month}2023 WHERE Card not null order by Date ", database, []);
+          addPrintoutFromSql(value!, branch,month );
+        } catch (e) {
+          print(e);
+        }
       }
+      print('Finished 1 :');
     } catch (e) {
       print(e);
     }
@@ -145,14 +156,16 @@ class SQLiteDatabase {
   static Future<void> addPrintoutFromSql(List<Map<String, dynamic>> packages,String branch, String month ) async {
     try {
       for (var element in packages) {
-        element.putIfAbsent("Branch", () => branch);
+        final mapData = Map<String, dynamic>.from(element);
+        mapData['Branch'] = branch;
         await Firestore.instance.collection("Printouts")
-            .document(element["Staff"])
+            .document(mapData["Staff"].toString())
             .collection("2023")
-            .document(element["month"])
-            .collection(element["Date"])
-            .document(element["CardNo"].toString())
-            .set(element);
+            .document(month.toUpperCase())
+            .collection(mapData["Date"])
+            .document(mapData["Card"].toString())
+            .set(mapData);
+        print('Finished 2 :');
       }
     } catch (e) {
       print('Caught addPrintoutFromSql error: $e');
@@ -180,17 +193,22 @@ class SQLiteDatabase {
       for (int x = 12; x > 0; x--) {
         try {
         final value = await instance.readDB("SELECT * FROM Round$x", database, []);
-        addHistoryFromSql(value!, branch);
+        addHistoryFromSql(value!, branch, x);
         } catch (e) {
           print('Caught Round error: $e');
         }
       }
 
   }
-  static Future<void> addHistoryFromSql(List<Map<String, dynamic>> packages,String branch ) async{
+  static Future<void> addHistoryFromSql(List<Map<String, dynamic>> packages,String branch, int round ) async{
     try {
       for(var element in packages){
+
         await Firestore.instance.collection("History").document(element["CardNo"]).set( element );
+        final mapData = Map<String, dynamic>.from(element);
+        mapData['Branch'] = branch;
+        mapData['Round'] = round;
+        await Firestore.instance.collection("Customers").document(element["CardNo"].toString()).collection("Payments").document(element["Date"].toString()).set( mapData );
       }
     } catch(e){
       print('Caught normal error: $e');

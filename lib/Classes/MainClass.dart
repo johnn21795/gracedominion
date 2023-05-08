@@ -215,7 +215,7 @@ class MainClass{
   }
 
   static Future<List<Map<String, dynamic>>> loadPayment(String card) async{
-    final CollectionReference payments  = Firestore.instance.collection("Customers").document("2301302569").collection("Payments");
+    final CollectionReference payments  = Firestore.instance.collection("Customers").document(card.toString()).collection("Payments");
     var thirdValue = await payments.get();
     List<Map<String, dynamic>> returnData = [];
 
@@ -277,7 +277,7 @@ class MainClass{
     try {
       for(var element in searchResult){
         print(element.map);
-        returnData.putIfAbsent("${element.map["CardNo"]}  ${element.map["StaffReg"]}", () => element.map);
+        returnData.putIfAbsent("${element.map["CardNo"]}\n${element.map["StaffReg"]}", () => element.map);
       }
     } on GrpcError catch (e) {
       returnData.putIfAbsent("error", () => {"error":e});
