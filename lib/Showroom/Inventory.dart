@@ -24,34 +24,26 @@ class MyFloatingActionButton extends StatefulWidget {
 
 class _MyFloatingActionButtonState extends State<MyFloatingActionButton> {
   bool _isHovering = false;
-  static const Duration _animationDuration = Duration(milliseconds: 200);
+  static const Duration _animationDuration = Duration(milliseconds: 100);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: widget.onPressed,
       onHover: (isHovering) {
-        setState(() {
-          _isHovering = isHovering;
-        });
-      },
+        setState(() { _isHovering = isHovering;});},
       child: AnimatedContainer(
         duration: _animationDuration,
-        width: _isHovering ? 200 : 56,
+        width: _isHovering ? 150 : 56,
         height: 56,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          color: Colors.blue,
+          color: _isHovering ? Colors.white: MainInterface.mainColor,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _isHovering ? Text(widget.text) : Icon(Icons.add),
-              Icon(Icons.arrow_forward_ios),
-            ],
-          ),
+          child: _isHovering ? Center(child: Text(widget.text, style: TextStyle(color: MainInterface.mainColor),)) :
+          Icon(Icons.add, color: !_isHovering ? Colors.white: MainInterface.mainColor,),
         ),
       ),
     );
@@ -68,29 +60,26 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   bool isTyping = false;
   final cardController = TextEditingController();
-  String cardLabel = "Card Number";
-  Color labelColor = Colors.purple;
+  String cardLabel = "Search Inventory";
+  Color labelColor = MainInterface.mainColor;
   bool isSearching = false;
+  List<bool> isHover = List.generate(2, (index) => false);
 
   @override
   Widget build(BuildContext context) {
     screenSize = MediaQuery.of(context).size;
     return Scaffold(
-      floatingActionButton:Container(
-        width: 150,
-        height: 50,
-        child: MyFloatingActionButton(
-          text: 'Add Item',
-          onPressed: (){},
-
-        ),
+      floatingActionButton: MyFloatingActionButton(
+        text: 'Add New Product',
+        onPressed: (){},
       ),
       body:  Stack(
         children: [
           Positioned(
-            left:20,
+            left:10,
             top: 0,
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   transform: Matrix4.translationValues(0, -10, 0),
@@ -198,6 +187,7 @@ class _InventoryPageState extends State<InventoryPage> {
                           fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: MainInterface.mainColor,
                       alignment: Alignment.centerLeft,
                       fixedSize: const Size(100, 38),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
@@ -205,36 +195,40 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 20,),
-                Container(
-                  transform: Matrix4.translationValues(0, -30, 0),
-                  child: ElevatedButton.icon(
-                    icon: FaIcon( Icons.search,
-                      size: 20,
-                      // color: isHover[4] ? Colors.purple : defaultColor = Colors.white
-                    ),
-                    onPressed: () {
-                      // searchFunction( cardController.text);
-                    },
-                    onHover: (state) {
-                      // isHover[4] = state;
-                      setState(() {});
-                    },
-                    label: Text(
-                      "All Products",
-                      style: TextStyle(
-                        // color: isHover[4] ? Colors.purple : defaultColor = Colors.white,
-                          fontSize: 13),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      alignment: Alignment.centerLeft,
-                      fixedSize: const Size(150, 38),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                      // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
-                    ),
-                  ),
-                ),
               ],
+            ),
+          ),
+          Positioned(
+            top: 32,
+              right: 20,
+            child: Container(
+              transform: Matrix4.translationValues(0, -30, 0),
+              child: ElevatedButton.icon(
+                icon: FaIcon( Icons.list_alt_rounded,
+                  size: 20,
+                  // color: isHover[4] ? Colors.purple : defaultColor = Colors.white
+                ),
+                onPressed: () {
+                  // searchFunction( cardController.text);
+                },
+                onHover: (state) {
+                  // isHover[4] = state;
+                  setState(() {});
+                },
+                label: Text(
+                  "All Products",
+                  style: TextStyle(
+                    color: isHover[1] ? Colors.white : MainInterface.mainColor,
+                      fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  backgroundColor: MainInterface.mainColor,
+                  fixedSize: const Size(130, 38),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                  // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
+                ),
+              ),
             ),
           ),
           Positioned(
@@ -439,12 +433,18 @@ class _TableClassState extends State<TableClass> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('${e[element]}'),
+                      Text('${e[element]}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Product ID:2348'),
-                          Text('Comment: This is Yellow Color'),
+                          Row(
+                            children: [
+                              Text('Product ID:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
+                              Text('3587', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
+
+                            ],
+                          ),
+                          Text('Comment:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
                           SizedBox()
                         ],
                       ),
