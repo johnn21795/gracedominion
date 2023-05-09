@@ -186,8 +186,7 @@ class _PrintoutState extends State<Printout> {
             children: <Widget>[
               Expanded(
                 child: Container(
-
-                    child: bodyData3(snapshot.data!, size)),
+                    child: printoutTable(snapshot.data!, size)),
               )
             ],
           );
@@ -196,7 +195,7 @@ class _PrintoutState extends State<Printout> {
     );
   }
 
-  Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
+  Widget printoutTable(List<Map<String, dynamic>> payment, Size size) {
     bool enabled = false;
     dataTableShowLogs = false;
     return Container(

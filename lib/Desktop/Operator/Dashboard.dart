@@ -1233,8 +1233,6 @@ class _TableClassState extends State<TableClass> {
   static void loadPayment(){
     futureData = null;
     futureData = TableClass.loadPayment(CustomerInformation.data["CardNo"].toString());
-
-    
   }
 
 

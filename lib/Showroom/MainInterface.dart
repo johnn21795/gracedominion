@@ -10,8 +10,13 @@ import 'package:window_manager/window_manager.dart';
 import '../Desktop/WidgetClass.dart';
 import 'Orders.dart';
 
+
+
+
 class MainInterface extends StatefulWidget {
   const MainInterface({Key? key}) : super(key: key);
+
+  static const Color mainColor = Color(0xff005500);
 
   @override
   State<MainInterface> createState() => _MainInterfaceState();
@@ -39,13 +44,13 @@ class _MainInterfaceState extends State<MainInterface> {
         child: Row(
           children: [
             Container(
-              color:Color(0xff005500),
+              color:MainInterface.mainColor,
               width: 125,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    color: Color(0xff005500),
+                    color:MainInterface.mainColor,
                     height: 50,
                     child: Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -97,7 +102,7 @@ class _MainInterfaceState extends State<MainInterface> {
                   children: [
                     headerRow(),
                     Container(height: 18, alignment: Alignment.bottomCenter,
-                        child:  Divider( height: 10, color: Color(0xff005500), thickness: 5,)),
+                        child:  const Divider( height: 10, color: MainInterface.mainColor, thickness: 5,)),
                     Expanded(
                         child: Container(
                           color:  const Color(0xFFEFEFEF),
