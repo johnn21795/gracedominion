@@ -38,13 +38,55 @@ class _MyFloatingActionButtonState extends State<MyFloatingActionButton> {
         height: 56,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          color: _isHovering ? Colors.white: MainInterface.mainColor,
+          color: _isHovering ? Colors.white70: MainInterface.mainColor,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _isHovering ? Center(child: Text(widget.text, style: TextStyle(color: MainInterface.mainColor),)) :
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: _isHovering ? Center(child: Text(widget.text, style: TextStyle(color: MainInterface.mainColor, fontWeight: FontWeight.bold),)) :
           Icon(Icons.add, color: !_isHovering ? Colors.white: MainInterface.mainColor,),
         ),
+      ),
+    );
+  }
+}
+
+class MyCustomButton extends StatefulWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final IconData icon;
+
+  const MyCustomButton({super.key, required this.text, required this.onPressed, required this.icon, } );
+
+  @override
+  MyCustomButtonState createState() => MyCustomButtonState();
+}
+
+class MyCustomButtonState extends State<MyCustomButton> {
+  bool _isHovering = false;
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      icon: FaIcon( widget.icon,
+        size: 20,
+        color: _isHovering ?  MainInterface.mainColor : Colors.white
+      ),
+      onPressed: widget.onPressed,
+      onHover: (isHovering) {
+        _isHovering = isHovering;
+        setState(() {});
+      },
+      label: Text(
+        widget.text,
+        style: TextStyle(
+            color: _isHovering ? MainInterface.mainColor : Colors.white,
+            fontSize: 13),
+      ),
+      style: ElevatedButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        backgroundColor:_isHovering ?   Colors.white : MainInterface.mainColor,
+        fixedSize: const Size(130, 38),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+        // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
       ),
     );
   }
@@ -63,7 +105,7 @@ class _InventoryPageState extends State<InventoryPage> {
   String cardLabel = "Search Inventory";
   Color labelColor = MainInterface.mainColor;
   bool isSearching = false;
-  List<bool> isHover = List.generate(2, (index) => false);
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,66 +126,12 @@ class _InventoryPageState extends State<InventoryPage> {
                 Container(
                   transform: Matrix4.translationValues(0, -10, 0),
                   height: 100,
-                  width: 500,
+                  width: screenSize!.width * 0.35,
                   child: TextField(
                     onSubmitted: (query){
-                      // searchFunction(query);
-                      // isUpdating = false;
+
                     },
                     onChanged: (card) async {
-                      // isUpdating = false;
-                      // if(cardController.value.text.length == 10 ){
-                      //   isSearching = true;
-                      //   searchView = false;
-                      //
-                      //   setState(() {});
-                      // }
-                      // if(cardController.value.text.length == 10 ){
-                      //   CustomerInformation.data = await MainClass.loadCustomerInfo(card);
-                      //   isSearching = false;
-                      //   if(CustomerInformation.data.containsKey("error")){
-                      //     var err = CustomerInformation.data.putIfAbsent("error", () => null);
-                      //     switch(err.code.toString()){
-                      //       case "5":
-                      //         cardLabel = "Card Not Found";
-                      //         labelColor = const Color(0xff9b0101);
-                      //         break;
-                      //       case "14":
-                      //         cardLabel = "No Internet Connection";
-                      //         labelColor = const Color(0xffd73d0a);
-                      //         break;
-                      //       case "2":
-                      //         cardLabel = "Slow Connection, retry";
-                      //         labelColor =  const Color(0xffde4e1b);
-                      //         break;
-                      //     }
-                      //     CustomerInformation.data = CustomerInformation.defaultData;
-                      //   }else{
-                      //     if(CustomerInformation.data.isEmpty){
-                      //       CustomerInformation.data = CustomerInformation.defaultData;
-                      //       cardLabel = "Card Number";
-                      //       labelColor = Colors.purple;
-                      //     }else{
-                      //       cardLabel = "Card Number";
-                      //       labelColor =  const Color(0xff258203);
-                      //       _TableClassState.loadPayment();
-                      //     }
-                      //   }
-                      // } else{
-                      //   cardLabel = "Card Number";
-                      //   labelColor = Colors.purple;
-                      //   CustomerInformation.data = CustomerInformation.defaultData;
-                      // }
-                      // if(cardController.value.text.length > 10 ){
-                      //   cardLabel = "Search Query";
-                      // }
-                      // nameTextController.text =  CustomerInformation.data["Name"];
-                      // phoneTextController.text =  stringify(CustomerInformation.data["Phone"]);
-                      // addressTextController.text =  CustomerInformation.data["Address"];
-                      // dateTextController.text = stringDateFormat(CustomerInformation.data["DateOfReg"]);
-
-                      // CustomerInformation.data["DateOfReg"] == ""? "":
-                      // dateFormat.format(CustomerInformation.data["DateOfReg"]);
                       setState(() { });
                     },
                     style: const TextStyle(fontSize: 14),
@@ -165,34 +153,13 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 20,),
+                const SizedBox(width: 20,),
                 Container(
                   transform: Matrix4.translationValues(0, -30, 0),
-                  child: ElevatedButton.icon(
-                    icon: FaIcon( Icons.search,
-                        size: 20,
-                        // color: isHover[4] ? Colors.purple : defaultColor = Colors.white
-                      ),
-                    onPressed: () {
-                      // searchFunction( cardController.text);
-                    },
-                    onHover: (state) {
-                      // isHover[4] = state;
-                      setState(() {});
-                    },
-                    label: Text(
-                      "Search",
-                      style: TextStyle(
-                          // color: isHover[4] ? Colors.purple : defaultColor = Colors.white,
-                          fontSize: 13),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MainInterface.mainColor,
-                      alignment: Alignment.centerLeft,
-                      fixedSize: const Size(100, 38),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                      // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
-                    ),
+                  child: MyCustomButton(
+                    text: "Search",
+                    onPressed: (){},
+                    icon: Icons.search,
                   ),
                 ),
               ],
@@ -200,34 +167,13 @@ class _InventoryPageState extends State<InventoryPage> {
           ),
           Positioned(
             top: 32,
-              right: 20,
+              right:  screenSize!.width * 0.03,
             child: Container(
               transform: Matrix4.translationValues(0, -30, 0),
-              child: ElevatedButton.icon(
-                icon: FaIcon( Icons.list_alt_rounded,
-                  size: 20,
-                  // color: isHover[4] ? Colors.purple : defaultColor = Colors.white
-                ),
-                onPressed: () {
-                  // searchFunction( cardController.text);
-                },
-                onHover: (state) {
-                  // isHover[4] = state;
-                  setState(() {});
-                },
-                label: Text(
-                  "All Products",
-                  style: TextStyle(
-                    color: isHover[1] ? Colors.white : MainInterface.mainColor,
-                      fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  backgroundColor: MainInterface.mainColor,
-                  fixedSize: const Size(130, 38),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                  // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
-                ),
+              child: MyCustomButton(
+                text: "All Products",
+                onPressed: (){},
+                icon: Icons.list_alt_rounded,
               ),
             ),
           ),
@@ -438,14 +384,13 @@ class _TableClassState extends State<TableClass> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            children: [
+                            children: const [
                               Text('Product ID:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
                               Text('3587', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
-
                             ],
                           ),
-                          Text('Comment:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
-                          SizedBox()
+                          const Text('Model:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
+                          const SizedBox()
                         ],
                       ),
                     ],
