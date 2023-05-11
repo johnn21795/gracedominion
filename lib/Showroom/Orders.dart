@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Showroom/MainInterface.dart';
 
 import 'Inventory.dart';
@@ -26,11 +27,12 @@ class _OrderPageState extends State<OrderPage> {
   bool isSearching = false;
   bool viewCustomers = false;
   bool viewProducts = false;
+  bool collectPayment = false;
 
   final Map<String, dynamic> items = {
-  'Chukwuedo James': 21795,
-  'Item 2': 21795,
-  'Item 3': 21795,
+  'CAKE CHILLER HW-848': 21795,
+  'ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG': 21795,
+  'WORK TABLE WHT-2-712S/BN-W03 4FEET': 21795,
   'Item 4': 21795,
   'Item 5': 21795,
   'Item 6': 21795,
@@ -244,6 +246,7 @@ class _OrderPageState extends State<OrderPage> {
               text: "Add Item",
               onPressed: (){},
               icon: Icons.add_box_rounded,
+              size: const Size(130, 38)
             ),
           ),
           Positioned(
@@ -283,6 +286,237 @@ class _OrderPageState extends State<OrderPage> {
               ),
             ),
           ),
+          Positioned(
+            left:screenSize!.width * 0.21,
+            child: Container(
+              height: screenSize!.height * 0.92,
+              width: screenSize!.width * 0.5,
+              decoration: BoxDecoration(
+                  color: const Color(0xFFF5FFF5),
+                  border: Border.all(color: MainInterface.mainColor, width: 1.0),
+                ),
+                child:Stack(
+                  children:  [
+                    Positioned(
+                      top:screenSize!.height * 0.016,
+                      left: 20,
+                      child: Text("MightyKens International Limited", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.02, fontWeight: FontWeight.bold),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.04,
+                        left: 20,
+                        child: Text("Order No: 2517", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.016),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.06,
+                        left: 20,
+                        child: Text("Wed May 8th, 2023", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.08,
+                        right: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("CUSTOMER:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.016, fontWeight: FontWeight.bold),),
+                            SizedBox(
+                                width: 250,
+                                child: Text("NIGERIA UNIVERSITY OF TECHNOLOGY", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),)),
+                            Text("08143255147", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),),
+                            SizedBox(
+                              width: 250,
+                                child: Text("Cs 50 CornerStone Plaza, Ojo Alaba Lagos", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.18,
+                        left: screenSize!.width * 0.22,
+                        child:  Text("Invoice", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.025, decoration: TextDecoration.underline, fontWeight: FontWeight.bold),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.17,
+                        left: 10,
+                        child:   Container(height: 50,
+                            width:  screenSize!.width * 0.49,
+                            alignment: Alignment.bottomCenter,
+                            child:  const Divider( height: 10, color: Color(0x99002200), thickness: 2,)),
+                    ),
+                    Positioned(
+                      top:screenSize!.height * 0.65,
+                      left: 10,
+                      child:   Container(height: 50,
+                          width:  screenSize!.width * 0.49,
+                          alignment: Alignment.bottomCenter,
+                          child:  const Divider( height: 10, color: Color(0x99002200), thickness: 2,)),
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.235,
+                        left: 0,
+                        child: Container(
+                          width:  screenSize!.width * 0.49,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              SizedBox(
+                                  width:  screenSize!.width * 0.32,
+                                  child: Text(" \t\t\t Product Details", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.07,
+                                  child: Text("Unit Price", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.03,
+                                  child: Text("Qty", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.03,
+                                  child: Text("Total", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+                              SizedBox(width: screenSize!.width * 0.005,),
+                            ],
+                          ),
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.265,
+                        left: 20,
+                        child: SizedBox(
+                          height: screenSize!.height * 0.415,
+                          width:  screenSize!.width * 0.485,
+                          child: ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (BuildContext context, int index) => Container(
+                              width:  screenSize!.width * 0.49,
+                              height: screenSize!.height * 0.06,
+                              margin: const EdgeInsets.fromLTRB(0, 3, 0, 5),
+                              padding: EdgeInsets.zero,
+
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5FFF5),
+                                border: Border.all(color:  const Color(0x33005500), width: 1.0),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  const Image(
+                                    image: AssetImage('assets/images/profile.jpg'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                  SizedBox( width: screenSize!.width * 0.27,
+                                      child: Text("ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+                                  Text("300,000", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w400),),
+                                  SizedBox(width: screenSize!.width * 0.01,),
+                                  Text("4", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w400),),
+                                  SizedBox(width: screenSize!.width * 0.01,),
+                                  Text("1,200,000", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w600),),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.72,
+                        right: 10,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            SizedBox(
+                                width: screenSize!.width * 0.07,
+                                child: Text("Grand Total:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                            SizedBox(
+                                width: screenSize!.width * 0.06,
+                                child: Text("250,00,000", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.72,
+                        left: 20,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            SizedBox(
+                                width: screenSize!.width * 0.09,
+                                child: Text("No of Items:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                            SizedBox(
+                                width: screenSize!.width * 0.06,
+                                child: Text("25", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.75,
+                        left: 20,
+                        child:!collectPayment ? MyCustomButton(
+                          text: "Payment",
+                          onPressed: (){},
+                          icon: FontAwesomeIcons.moneyCheckDollar,
+                          size:  Size(screenSize!.width * 0.07, screenSize!.height * 0.04)
+                        ):  Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox(
+                                    width: screenSize!.width * 0.09,
+                                    child: Text("Payment Status:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                                SizedBox(
+                                    width: screenSize!.width * 0.2,
+                                    child: Text("Paid with Transfer", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                    width: screenSize!.width * 0.09,
+                                    child: Text("Payment Ref:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                                SizedBox(
+                                    width: screenSize!.width * 0.06,
+                                    child: Text("23051089", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                              ],
+                            )
+                          ],
+                        )
+                    ),
+                    // Positioned(
+                    //     top:screenSize!.height * 0.78,
+                    //     left: 20,
+                    //     child: Row(
+                    //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    //       children: [
+                    //         SizedBox(
+                    //             width: screenSize!.width * 0.09,
+                    //             child: Text("Payment Ref:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                    //         SizedBox(
+                    //             width: screenSize!.width * 0.06,
+                    //             child: Text("23051089", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                    //       ],
+                    //     )
+                    // ),
+                    Positioned(
+                        top:screenSize!.height * 0.85,
+                        left: screenSize!.width * 0.17,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                                child: Text("MightyKens International Limited:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.013, fontWeight: FontWeight.bold),)),
+                            SizedBox(
+                                child: Text("08143255147", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.013, ),)),
+                            SizedBox(
+                                child: Text("Cs 50 CorenerStone Plaza Ojo Lagos", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.013, ),)),
+                            SizedBox(
+                                child: Text("Thanks for your Patronage...", style: TextStyle(fontFamily: "Claredon", fontStyle: FontStyle.italic , fontSize: screenSize!.height * 0.013, ),))
+                          ],
+                        )
+                    ),
+
+                  ],
+
+            )
+            )
+          )
 
 
         ],

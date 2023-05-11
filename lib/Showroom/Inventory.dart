@@ -54,8 +54,9 @@ class MyCustomButton extends StatefulWidget {
   final String text;
   final VoidCallback onPressed;
   final IconData icon;
+  final Size size;
 
-  const MyCustomButton({super.key, required this.text, required this.onPressed, required this.icon, } );
+  const MyCustomButton({super.key, required this.text, required this.onPressed, required this.icon, required this.size, } );
 
   @override
   MyCustomButtonState createState() => MyCustomButtonState();
@@ -67,7 +68,7 @@ class MyCustomButtonState extends State<MyCustomButton> {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       icon: FaIcon( widget.icon,
-        size: 20,
+        size: widget.size.height * 0.5,
         color: _isHovering ?  MainInterface.mainColor : Colors.white
       ),
       onPressed: widget.onPressed,
@@ -79,12 +80,12 @@ class MyCustomButtonState extends State<MyCustomButton> {
         widget.text,
         style: TextStyle(
             color: _isHovering ? MainInterface.mainColor : Colors.white,
-            fontSize: 13),
+            fontSize: widget.size.height / 3),
       ),
       style: ElevatedButton.styleFrom(
         alignment: Alignment.centerLeft,
         backgroundColor:_isHovering ?   Colors.white : MainInterface.mainColor,
-        fixedSize: const Size(130, 38),
+        fixedSize: widget.size,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
         // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
       ),
@@ -160,6 +161,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     text: "Search",
                     onPressed: (){},
                     icon: Icons.search,
+                    size: const Size(130, 38)
                   ),
                 ),
               ],
@@ -174,6 +176,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 text: "All Products",
                 onPressed: (){},
                 icon: Icons.list_alt_rounded,
+                size: const Size(130, 38)
               ),
             ),
           ),
