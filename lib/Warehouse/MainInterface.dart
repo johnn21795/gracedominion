@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Showroom/Customers.dart';
-import 'package:gracedominion/Showroom/Inventory.dart';
+import 'package:gracedominion/Warehouse/Inventory.dart';
 import 'package:gracedominion/Showroom/Payments.dart';
 import 'package:gracedominion/Showroom/Sales.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../Desktop/WidgetClass.dart';
-import 'Orders.dart';
+import 'Supply.dart';
 
 
 
@@ -16,17 +16,17 @@ import 'Orders.dart';
 class MainInterface extends StatefulWidget {
   const MainInterface({Key? key}) : super(key: key);
 
-  static const Color mainColor = Color(0xff005500);
+  static const Color mainColor = Color(0xff000055);
 
   @override
   State<MainInterface> createState() => _MainInterfaceState();
 }
 
+String activePage = "Dashboard";
+Widget page = Container();
 class _MainInterfaceState extends State<MainInterface> {
   List<bool> isHover = List.generate(6, (index) => false);
-  String activePage = "Dashboard";
 
-  Widget page = Container();
 
   @override
   void initState() {
@@ -55,51 +55,24 @@ class _MainInterfaceState extends State<MainInterface> {
                     child: Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Text("ShowRoom", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Copper", fontSize: 18, color: Colors.white),),
+                        Text("Warehouse", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Copper", fontSize: 18, color: Colors.white),),
                         // Text("James", textAlign: TextAlign.center, style: TextStyle(fontFamily: "claredon", fontSize: 15, color: Colors.white54),),
                       ],
                     )),
                   ),
                   Container(height: 5, color: Colors.white60,),
-
-                  SizedBox(height:50, child: MyCustomButton(text: "Inventory", onPressed:  (){activePage = "Inventory"; page = const InventoryPage(); setState(() {});}, icon: FontAwesomeIcons.desktop, size: const Size(150, 42))),
-                  const SizedBox(height: 1,),
-                  SizedBox(height:50, child: MyCustomButton(text: "Orders", onPressed:  (){activePage = "Supply"; page = const OrderPage(); setState(() {});}, icon: FontAwesomeIcons.moneyCheckDollar, size: const Size(150, 42))),
-                  const SizedBox(height: 1,),
-                  SizedBox(height:50, child: MyCustomButton(text: "Customers", onPressed:  (){activePage = "Customers"; page = const CustomersPage(); setState(() {});}, icon: FontAwesomeIcons.user, size: const Size(150, 42))),
-                  const SizedBox(height: 1,),
-                  SizedBox(height:50, child: MyCustomButton(text: "Payments", onPressed:  (){activePage = "Records"; page = const PaymentPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))),
-                  const SizedBox(height: 1,),
-                  SizedBox(height:50, child: MyCustomButton(text: "Sales", onPressed:  (){activePage = "Sales"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))),
-
-                  //
-                  //
-                  //
                   // MainNavigation.mainNavigationButton(isHover[0], "Inventory", FontAwesomeIcons.desktop,
                   //         (state) { isHover[0] = state;setState(() {});},
                   //         (){activePage = "Inventory"; page = const InventoryPage(); setState(() {});}
                   // ),
-                  // const SizedBox(height: 1,),
-                  // MainNavigation.mainNavigationButton(isHover[1], "\t\t Orders",FontAwesomeIcons.moneyCheckDollar,
-                  //         (state) {isHover[1] = state;setState(() {});},
-                  //         (){activePage = "Orders    "; page = const OrderPage();setState(() { });}
-                  // ),
-                  // const SizedBox(height: 1,),
-                  // MainNavigation.mainNavigationButton(isHover[2], "\t Customers",
-                  //     FontAwesomeIcons.sheetPlastic, (state) {isHover[2] = state;setState(() {});},
-                  //         (){activePage = "Customers ";page = const CustomersPage(); setState(() {});}
-                  // ),
-                  // const SizedBox(height: 1,),
-                  // MainNavigation.mainNavigationButton(
-                  //     isHover[3], "Payments", FontAwesomeIcons.gears,
-                  //     (state) { isHover[3] = state;setState(() {});},
-                  //     (){activePage = "Payments "; page = const PaymentPage(); setState(() {});
-                  // }),
-                  // MainNavigation.mainNavigationButton(
-                  //     isHover[4], "\t\t Sales", FontAwesomeIcons.gears,
-                  //         (state) { isHover[4] = state;setState(() {});},
-                  //         (){activePage = "Sales "; page = const SalesPage(); setState(() {});
-                  //     }),
+                  SizedBox(height:50, child: MyCustomButton(text: "Inventory", onPressed:  (){activePage = "Inventory"; page =  InventoryPage(myFunction: changeState); setState(() {});}, icon: FontAwesomeIcons.desktop, size: const Size(150, 42))),
+                  const SizedBox(height: 1,),
+                  SizedBox(height:50, child: MyCustomButton(text: "Supply", onPressed:  (){activePage = "Supply"; page = const SupplyPage(); setState(() {});}, icon: FontAwesomeIcons.moneyCheckDollar, size: const Size(150, 42))),
+                  const SizedBox(height: 1,),
+                  SizedBox(height:50, child: MyCustomButton(text: "Customers", onPressed:  (){activePage = "Customers"; page = const CustomersPage(); setState(() {});}, icon: FontAwesomeIcons.user, size: const Size(150, 42))),
+                  const SizedBox(height: 1,),
+                  SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Records"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))),
+
 
                 ],
               ),
@@ -134,8 +107,17 @@ class _MainInterfaceState extends State<MainInterface> {
 
     );
   }
+  void changeState(){
+
+    setState(() {
+    print("Testing Page");
+  });
+
+
+  }
 
   Widget headerRow(){
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -158,16 +140,16 @@ class _MainInterfaceState extends State<MainInterface> {
                 decoration: const BoxDecoration(
                     image: DecorationImage(
                         image: AssetImage(
-                            'assets/images/logo1.jpg')
+                            'assets/images/logo2.jpg')
                     )
                 ),
 
               ),
-              const SizedBox(width: 6,),
-              const Text(
+               SizedBox(width: 6,),
+               Text(
                 "MightyKens International", textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 30,
-                    color: Color(0xff005500),
+                    color: WidgetClass.mainColor,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.none,
                     fontFamily: 'Claredon'),),

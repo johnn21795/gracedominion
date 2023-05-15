@@ -24,12 +24,16 @@ class Assets {
   static const String imagesCustomers = 'assets/images/customers.png';
   static const String imagesDominion = 'assets/images/Dominion.jpg';
   static const String imagesDominion2 = 'assets/images/Dominion2.jpg';
+  static const String imagesLogo1 = 'assets/images/logo1.jpg';
+  static const String imagesLogo2 = 'assets/images/logo2.jpg';
   static const String imagesNotification = 'assets/images/notification.png';
   static const String imagesPlaceholder = 'assets/images/placeholder.jpg';
   static const String imagesPrintout = 'assets/images/printout.png';
   static const String imagesProfile = 'assets/images/profile.jpg';
+  static const String imagesPurple = 'assets/images/purple.png';
   static const String imagesRecords = 'assets/images/records.png';
   static const String imagesRegister = 'assets/images/register.png';
   static const String imagesSplash = 'assets/images/splash.png';
+  static const String imagesTLogo = 'assets/images/TLogo.png';
 
 }

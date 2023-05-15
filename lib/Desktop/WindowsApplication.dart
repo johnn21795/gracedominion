@@ -35,8 +35,8 @@ class WindowsApplication{
     storage = FirebaseStorage.instanceFor(app: value),
        print("storage ${storage.app}"),
     FirebaseAuth.instanceFor(app: value),
-    MainClass.loadFireBaseAppInformation(),
-    MainClass.loadStaffInformation(),
+    // MainClass.loadFireBaseAppInformation(),
+    // MainClass.loadStaffInformation(),
     },
       onError:(f) => print("Error completing: $f"),
     );

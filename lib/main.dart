@@ -5,11 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:gracedominion/Desktop/Operator/Dashboard.dart';
 // import 'package:gracedominion/Desktop/Operator/MainInterface.dart';
-import 'package:gracedominion/Showroom/MainInterface.dart';
+// import 'package:gracedominion/Warehouse/MainInterface.dart';
 import 'package:gracedominion/Desktop/Splash.dart';
 import 'package:gracedominion/Desktop/WindowsApplication.dart';
 import 'package:gracedominion/UI/FireTest.dart';
+import 'package:gracedominion/Warehouse/Product.dart';
 
+import 'Interface/MainInterface.dart';
+import 'Interface/login.dart';
 import 'UI/CollectPayment.dart';
 import 'UI/Customers.dart';
 import 'UI/Dashboard.dart';
@@ -17,7 +20,7 @@ import 'UI/NewCustomer.dart';
 import 'UI/Printout.dart';
 import 'UI/Profile.dart';
 import 'UI/Upload.dart';
-import 'UI/login.dart';
+// import 'UI/login.dart';
 import 'AppRoutes.dart';
 import 'firebase_options.dart';
 
@@ -41,6 +44,11 @@ void main() async{
   runApp(const MyApp());
 
 }
+
+Map<String, MaterialColor> themes = {
+  "Warehouse":  const MaterialColor(700,{700: Color(0xFF000055)},),
+  "ShowRoom":   const MaterialColor(700,{700: Color(0xFF005500)}),
+  "Management":   const MaterialColor(700,{700: Color(0xFF005555)})};
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -93,8 +101,20 @@ class MyApp extends StatelessWidget {
       // case AppRoutes.operatorDashboard:
       //   return buildRoute(const MainInterface(), route:route);
 
+
+
+    //NEW ROUTING
+      case AppRoutes.interfaceLogin:
+        return buildRoute(const Login(), route:route);
+      case AppRoutes.windowsDashboard:
+        return buildRoute(const Login(), route:route);
+
+
       case AppRoutes.operatorDashboard:
         return buildRoute(const MainInterface(), route:route);
+
+      case AppRoutes.product:
+        return buildRoute(const ProductPage(data:{}), route:route);
       default:
         return null;
 

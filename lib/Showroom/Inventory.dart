@@ -12,86 +12,8 @@ import '../Desktop/WidgetClass.dart';
 final dateFormat = DateFormat('dd-MM-yyyy');
 Size? screenSize;
 
-class MyFloatingActionButton extends StatefulWidget {
-  final String text;
-  final VoidCallback onPressed;
 
-  MyFloatingActionButton({required this.text, required this.onPressed});
 
-  @override
-  _MyFloatingActionButtonState createState() => _MyFloatingActionButtonState();
-}
-
-class _MyFloatingActionButtonState extends State<MyFloatingActionButton> {
-  bool _isHovering = false;
-  static const Duration _animationDuration = Duration(milliseconds: 100);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: widget.onPressed,
-      onHover: (isHovering) {
-        setState(() { _isHovering = isHovering;});},
-      child: AnimatedContainer(
-        duration: _animationDuration,
-        width: _isHovering ? 150 : 56,
-        height: 56,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          color: _isHovering ? Colors.white70: MainInterface.mainColor,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _isHovering ? Center(child: Text(widget.text, style: TextStyle(color: MainInterface.mainColor, fontWeight: FontWeight.bold),)) :
-          Icon(Icons.add, color: !_isHovering ? Colors.white: MainInterface.mainColor,),
-        ),
-      ),
-    );
-  }
-}
-
-class MyCustomButton extends StatefulWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final IconData icon;
-  final Size size;
-
-  const MyCustomButton({super.key, required this.text, required this.onPressed, required this.icon, required this.size, } );
-
-  @override
-  MyCustomButtonState createState() => MyCustomButtonState();
-}
-
-class MyCustomButtonState extends State<MyCustomButton> {
-  bool _isHovering = false;
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      icon: FaIcon( widget.icon,
-        size: widget.size.height * 0.5,
-        color: _isHovering ?  MainInterface.mainColor : Colors.white
-      ),
-      onPressed: widget.onPressed,
-      onHover: (isHovering) {
-        _isHovering = isHovering;
-        setState(() {});
-      },
-      label: Text(
-        widget.text,
-        style: TextStyle(
-            color: _isHovering ? MainInterface.mainColor : Colors.white,
-            fontSize: widget.size.height / 3),
-      ),
-      style: ElevatedButton.styleFrom(
-        alignment: Alignment.centerLeft,
-        backgroundColor:_isHovering ?   Colors.white : MainInterface.mainColor,
-        fixedSize: widget.size,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-        // backgroundColor: isHover[4] ? Colors.white : defaultColor = Colors.purple,
-      ),
-    );
-  }
-}
 
 class InventoryPage extends StatefulWidget {
   const InventoryPage({Key? key}) : super(key: key);
@@ -114,7 +36,9 @@ class _InventoryPageState extends State<InventoryPage> {
     return Scaffold(
       floatingActionButton: MyFloatingActionButton(
         text: 'Add New Product',
-        onPressed: (){},
+        onPressed: (){
+
+        },
       ),
       body:  Stack(
         children: [
@@ -184,7 +108,7 @@ class _InventoryPageState extends State<InventoryPage> {
             top:50,
             child: SizedBox(
               height: screenSize!.height * 0.87,
-                child: TableClass()),
+                child:  TableClass(tableColumns: const {"No" :ColumnSize.S,"Image":ColumnSize.S,"Name":ColumnSize.L,"Category":ColumnSize.M,"SKU":ColumnSize.S,"Quantity":ColumnSize.S,"Comment":ColumnSize.S}, tableName: "Inventory", myFunction: (){})),
           )
         ],
       )
@@ -195,224 +119,224 @@ class _InventoryPageState extends State<InventoryPage> {
 
 }
 
-
-class TableClass extends StatefulWidget {
-  const TableClass({super.key});
-
-  static List<Map<String, dynamic>> returnData = [];
-  static String lastCard = "";
-  static Future<List<Map<String, dynamic>>> loadPayment(String card) async {
-    // if (card != lastCard) {
-    //   // returnData = await MainClass.loadPayment(card);
-    //   returnData = List.generate(30, (index) => {
-    //     "Image": "Kitchen", "Name":"ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG", "Quantity":5, "SKU":"YEG-2-4DG", "Category" :"ELECTRIC GRIDDLE STANDING"
-    //   });
-    //   lastCard = card;
-    //   print("Operator Data............ $returnData");
-    // } else {
-    //   lastCard = card;
-    // }
-    returnData = List.generate(30, (index) => {
-      "index":index+1, "Image":  "Kitchen", "Name":"ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG", "Quantity":5000, "SKU":"YEG-2-4DG", "Category" :"ELECTRIC GRIDDLE STANDING"
-    });
-    return returnData;
-  }
-
-  @override
-  State<TableClass> createState() => _TableClassState();
-}
-
-class _TableClassState extends State<TableClass> {
-
-  List<DataColumn> selectedColumns = [];
-
-  List<DataColumn> availableColumns = [];
-
-  List<DataCell>  availableCells = [];
-  Map<String, int> tableColumns = {"No" :0,"Image":1,"Name":2,"Category":3,"SKU":4,"Quantity":5,"Comment":6};
-
-  static late Future<List<Map<String, dynamic>>>? futureData ;
-
-  static List<bool> editable = [];
-
-  @override
-  void initState() {
-    futureData = TableClass.loadPayment("2301302569");
-    // futureData!.then((value) => {
-    //   editable = List.generate(value.length, (index) => false)
-    // });
-    super.initState();
-  }
-
-  static void loadPayment(){
-    futureData = null;
-    futureData = TableClass.loadPayment("2301302569");
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    setAvailableColumns();
-
-    return FutureBuilder(
-      future: futureData,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-
-          return const Center(child: CircularProgressIndicator());
-        } else {
-          print("Operator Data............ ${snapshot.data} ");
-          editable = List.generate(snapshot.data!.length, (index) => false);
-          print(editable);
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            verticalDirection: VerticalDirection.down,
-            children: <Widget>[
-              Expanded(
-                child: Container(
-                    padding: const EdgeInsets.all(5),
-                    child: bodyData3(snapshot.data!, size)),
-              )
-            ],
-          );
-        }
-      },
-    );
-  }
-
-  Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
-    bool enabled = false;
-    dataTableShowLogs = false;
-    return SizedBox(
-      width: size.width * 0.9,
-      child: DataTable2(
-          headingTextStyle:  const TextStyle(backgroundColor: MainInterface.mainColor),
-          headingRowColor: MaterialStateProperty.all(MainInterface.mainColor),
-          border: const TableBorder(
-            left: BorderSide(color: MainInterface.mainColor),
-            right: BorderSide(color: MainInterface.mainColor),
-          ),
-          horizontalMargin: 0,
-          headingRowHeight: 40,
-          dataRowHeight: 70,
-          dividerThickness: 3,
-          columnSpacing: 0,
-          showCheckboxColumn: false,
-          showBottomBorder: true,
-          smRatio: 0.4,
-          lmRatio: 2,
-          columns: availableColumns,
-          rows: payment
-              .map((e) => DataRow(
-              cells: setAvailableCells(e)))
-              .toList()),
-    );
-  }
-
-  void setAvailableColumns(){
-    availableColumns = [];
-    var mapEntries = tableColumns.entries.toList()
-      ..sort((a, b) => a.value.compareTo(b.value));
-    tableColumns
-      ..clear()
-      ..addEntries(mapEntries);
-
-    for (var element in tableColumns.keys) {
-      availableColumns.add(
-        element == "No"? DataColumn2(
-          label:  Center(child: Text(element)),
-          fixedWidth: 50,
-          onSort: (_, __) {
-          },
-        ):
-          DataColumn2(
-            label:  Center(child: Text(element)),
-            size:  element == "Image" || element == "Quantity"  || element == "SKU" || element == "Comment"? ColumnSize.S :  element == "Name"? ColumnSize.L:  ColumnSize.M,
-            onSort: (_, __) {
-            },
-          )
-      );
-    }
-
-  }
-  List<DataCell> setAvailableCells(e){
-    print("Setting Available Cells");
-    availableCells = [];
-    for (var element in tableColumns.keys) {
-
-      element == "No"? element = "index": element;
-
-      bool x =false;
-      availableCells.add(
-        element == "Image"?  DataCell(
-            StatefulBuilder(builder: (context, setState){
-
-              return GestureDetector(
-                onDoubleTap: () {
-                  print('onSubmited enabled');
-                  editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
-                  print( editable[int.parse("${e["index"]}") -1]);
-                  setState((){});
-                },
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(3.0),
-                    child: Image(
-                      image: AssetImage('assets/images/profile.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              );}
-            ),
-            ):
-        element == "Name"?
-        DataCell(
-            StatefulBuilder(builder: (context, setState){
-              return GestureDetector(
-                onDoubleTap: () {
-                  print('onSubmited enabled');
-                  editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
-                  setState((){});
-                },
-                child: Center(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('${e[element]}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: const [
-                              Text('Product ID:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
-                              Text('3587', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
-                            ],
-                          ),
-                          const Text('Model:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
-                          const SizedBox()
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );}
-            ),
-            showEditIcon: false):
-        DataCell(
-          Center(child:
-          Text(
-              element == "Date"? dateFormat.format(DateTime.parse('${e["Date"]}')) : '${e[element]}'
-          )
-          ),
-        ),
-      );
-    }
-
-
-    return availableCells;
-  }
-}
+//
+// class TableClass extends StatefulWidget {
+//   const TableClass({super.key});
+//
+//   static List<Map<String, dynamic>> returnData = [];
+//   static String lastCard = "";
+//   static Future<List<Map<String, dynamic>>> loadPayment(String card) async {
+//     // if (card != lastCard) {
+//     //   // returnData = await MainClass.loadPayment(card);
+//     //   returnData = List.generate(30, (index) => {
+//     //     "Image": "Kitchen", "Name":"ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG", "Quantity":5, "SKU":"YEG-2-4DG", "Category" :"ELECTRIC GRIDDLE STANDING"
+//     //   });
+//     //   lastCard = card;
+//     //   print("Operator Data............ $returnData");
+//     // } else {
+//     //   lastCard = card;
+//     // }
+//     returnData = List.generate(30, (index) => {
+//       "index":index+1, "Image":  "Kitchen", "Name":"ELECTRIC GRIDDLE STANDING WITH CABINET HALF GROOVED HALF SMOOTH BIG", "Quantity":5000, "SKU":"YEG-2-4DG", "Category" :"ELECTRIC GRIDDLE STANDING"
+//     });
+//     return returnData;
+//   }
+//
+//   @override
+//   State<TableClass> createState() => _TableClassState();
+// }
+//
+// class _TableClassState extends State<TableClass> {
+//
+//   List<DataColumn> selectedColumns = [];
+//
+//   List<DataColumn> availableColumns = [];
+//
+//   List<DataCell>  availableCells = [];
+//   Map<String, int> tableColumns = {"No" :0,"Image":1,"Name":2,"Category":3,"SKU":4,"Quantity":5,"Comment":6};
+//
+//   static late Future<List<Map<String, dynamic>>>? futureData ;
+//
+//   static List<bool> editable = [];
+//
+//   @override
+//   void initState() {
+//     futureData = TableClass.loadPayment("2301302569");
+//     // futureData!.then((value) => {
+//     //   editable = List.generate(value.length, (index) => false)
+//     // });
+//     super.initState();
+//   }
+//
+//   static void loadPayment(){
+//     futureData = null;
+//     futureData = TableClass.loadPayment("2301302569");
+//   }
+//
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     Size size = MediaQuery.of(context).size;
+//     setAvailableColumns();
+//
+//     return FutureBuilder(
+//       future: futureData,
+//       builder: (context, snapshot) {
+//         if (!snapshot.hasData) {
+//
+//           return const Center(child: CircularProgressIndicator());
+//         } else {
+//           print("Operator Data............ ${snapshot.data} ");
+//           editable = List.generate(snapshot.data!.length, (index) => false);
+//           print(editable);
+//           return Column(
+//             mainAxisSize: MainAxisSize.min,
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             verticalDirection: VerticalDirection.down,
+//             children: <Widget>[
+//               Expanded(
+//                 child: Container(
+//                     padding: const EdgeInsets.all(5),
+//                     child: bodyData3(snapshot.data!, size)),
+//               )
+//             ],
+//           );
+//         }
+//       },
+//     );
+//   }
+//
+//   Widget bodyData3(List<Map<String, dynamic>> payment, Size size) {
+//     bool enabled = false;
+//     dataTableShowLogs = false;
+//     return SizedBox(
+//       width: size.width * 0.9,
+//       child: DataTable2(
+//           headingTextStyle:  const TextStyle(backgroundColor: MainInterface.mainColor),
+//           headingRowColor: MaterialStateProperty.all(MainInterface.mainColor),
+//           border: const TableBorder(
+//             left: BorderSide(color: MainInterface.mainColor),
+//             right: BorderSide(color: MainInterface.mainColor),
+//           ),
+//           horizontalMargin: 0,
+//           headingRowHeight: 40,
+//           dataRowHeight: 70,
+//           dividerThickness: 3,
+//           columnSpacing: 0,
+//           showCheckboxColumn: false,
+//           showBottomBorder: true,
+//           smRatio: 0.4,
+//           lmRatio: 2,
+//           columns: availableColumns,
+//           rows: payment
+//               .map((e) => DataRow(
+//               cells: setAvailableCells(e)))
+//               .toList()),
+//     );
+//   }
+//
+//   void setAvailableColumns(){
+//     availableColumns = [];
+//     var mapEntries = tableColumns.entries.toList()
+//       ..sort((a, b) => a.value.compareTo(b.value));
+//     tableColumns
+//       ..clear()
+//       ..addEntries(mapEntries);
+//
+//     for (var element in tableColumns.keys) {
+//       availableColumns.add(
+//         element == "No"? DataColumn2(
+//           label:  Center(child: Text(element)),
+//           fixedWidth: 50,
+//           onSort: (_, __) {
+//           },
+//         ):
+//           DataColumn2(
+//             label:  Center(child: Text(element)),
+//             size:  element == "Image" || element == "Quantity"  || element == "SKU" || element == "Comment"? ColumnSize.S :  element == "Name"? ColumnSize.L:  ColumnSize.M,
+//             onSort: (_, __) {
+//             },
+//           )
+//       );
+//     }
+//
+//   }
+//   List<DataCell> setAvailableCells(e){
+//     print("Setting Available Cells");
+//     availableCells = [];
+//     for (var element in tableColumns.keys) {
+//
+//       element == "No"? element = "index": element;
+//
+//       bool x =false;
+//       availableCells.add(
+//         element == "Image"?  DataCell(
+//             StatefulBuilder(builder: (context, setState){
+//
+//               return GestureDetector(
+//                 onDoubleTap: () {
+//                   print('onSubmited enabled');
+//                   editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
+//                   print( editable[int.parse("${e["index"]}") -1]);
+//                   setState((){});
+//                 },
+//                 child: const Center(
+//                   child: Padding(
+//                     padding: EdgeInsets.all(3.0),
+//                     child: Image(
+//                       image: AssetImage('assets/images/profile.jpg'),
+//                       fit: BoxFit.cover,
+//                     ),
+//                   ),
+//                 ),
+//               );}
+//             ),
+//             ):
+//         element == "Name"?
+//         DataCell(
+//             StatefulBuilder(builder: (context, setState){
+//               return GestureDetector(
+//                 onDoubleTap: () {
+//                   print('onSubmited enabled');
+//                   editable[int.parse("${e["index"]}") -1] = !editable[int.parse("${e["index"]}") -1];
+//                   setState((){});
+//                 },
+//                 child: Center(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     children: [
+//                       Text('${e[element]}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                         children: [
+//                           Row(
+//                             children: const [
+//                               Text('Product ID:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
+//                               Text('3587', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
+//                             ],
+//                           ),
+//                           const Text('Model:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
+//                           const SizedBox()
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               );}
+//             ),
+//             showEditIcon: false):
+//         DataCell(
+//           Center(child:
+//           Text(
+//               element == "Date"? dateFormat.format(DateTime.parse('${e["Date"]}')) : '${e[element]}'
+//           )
+//           ),
+//         ),
+//       );
+//     }
+//
+//
+//     return availableCells;
+//   }
+// }

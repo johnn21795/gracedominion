@@ -53,6 +53,7 @@ dependencies:
   bouncing_draggable_dialog: ^1.0.2
   data_table_2: ^2.4.1
   sqflite_common_ffi: ^2.2.4
+  file_picker: ^4.0.0
 
   flutter:
     sdk: flutter

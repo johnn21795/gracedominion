@@ -54,26 +54,29 @@ class _MainInterfaceState extends State<MainInterface> {
                     )),
                   ),
                   Container(height: 5, color: Colors.white60,),
-                  WidgetClass.mainNavigationButton(isHover[0], "Dashboard", FontAwesomeIcons.desktop,
-                          (state) { isHover[0] = state;setState(() {});},
-                          (){activePage = "Dashboard"; page = const OperatorDashboard(); setState(() {});}
-                  ),
+                  // WidgetClass.mainNavigationButton(isHover[0], "Dashboard", FontAwesomeIcons.desktop,
+                  //         (state) { isHover[0] = state;setState(() {});},
+                  //         (){activePage = "Dashboard"; page = const OperatorDashboard(); setState(() {});}
+                  // ),
+                  SizedBox(
+                      height: 50,
+                      child: MyCustomButton(text: "Dashboard", onPressed:(){activePage = "Dashboard"; page = const OperatorDashboard(); setState(() {});}, icon: FontAwesomeIcons.desktop, size: const Size(150,42))),
                   const SizedBox(height: 1,),
-                  WidgetClass.mainNavigationButton(isHover[1], "\t\t Income",FontAwesomeIcons.moneyCheckDollar,
-                          (state) {isHover[1] = state;setState(() {});},
-                          (){activePage = "Income    "; page = const Income();setState(() { });}
-                  ),
+                  // WidgetClass.mainNavigationButton(isHover[1], "\t\t Income",FontAwesomeIcons.moneyCheckDollar,
+                  //         (state) {isHover[1] = state;setState(() {});},
+                  //         (){activePage = "Income    "; page = const Income();setState(() { });}
+                  // ),
                   const SizedBox(height: 1,),
-                  WidgetClass.mainNavigationButton(isHover[2], "\t\t\t\t Printout",
-                      FontAwesomeIcons.sheetPlastic, (state) {isHover[2] = state;setState(() {});},
-                          (){activePage = "Printout ";page = const Printout(); setState(() {});}
-                  ),
+                  // WidgetClass.mainNavigationButton(isHover[2], "\t\t\t\t Printout",
+                  //     FontAwesomeIcons.sheetPlastic, (state) {isHover[2] = state;setState(() {});},
+                  //         (){activePage = "Printout ";page = const Printout(); setState(() {});}
+                  // ),
                   const SizedBox(height: 1,),
-                  WidgetClass.mainNavigationButton(
-                      isHover[3], "\t\t Settings", FontAwesomeIcons.gears,
-                      (state) { isHover[3] = state;setState(() {});},
-                      (){activePage = "Settings "; page = const Printout(); setState(() {});
-                  }),
+                  // WidgetClass.mainNavigationButton(
+                  //     isHover[3], "\t\t Settings", FontAwesomeIcons.gears,
+                  //     (state) { isHover[3] = state;setState(() {});},
+                  //     (){activePage = "Settings "; page = const Printout(); setState(() {});
+                  // }),
 
                 ],
               ),

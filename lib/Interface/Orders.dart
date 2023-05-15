@@ -429,7 +429,7 @@ class _OrderPageState extends State<OrderPage> {
                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                                   children: [
                                     const Image(
-                                      image: AssetImage('assets/images/profile.jpg'),
+                                      image: AssetImage('assets/images/placeholder.jpg'),
                                       fit: BoxFit.cover,
                                     ),
                                     SizedBox( width: screenSize!.width * 0.27,

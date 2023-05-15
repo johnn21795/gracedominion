@@ -17,4 +17,12 @@ class AppRoutes{
 
     static const windowsSplash = '/splash';
     static const operatorDashboard = '/operatorDashboard';
+
+    //For Mighty kens
+    static const product = '/product';
+
+    //New Routing
+    static const interfaceLogin = '/interfaceLogin';
+    static const windowsDashboard = '/windowsDashboard';
+
 }
