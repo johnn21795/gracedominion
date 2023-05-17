@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../AppRoutes.dart';
 import '../Classes/MainClass.dart';
+import '../Classes/TableClass.dart';
 import '../Desktop/WidgetClass.dart';
 
 

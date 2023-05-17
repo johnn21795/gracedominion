@@ -7,7 +7,9 @@ import 'package:gracedominion/Interface/Product.dart';
 import 'package:intl/intl.dart';
 
 import '../AppRoutes.dart';
+import '../Classes/LogicClass.dart';
 import '../Classes/MainClass.dart';
+import '../Classes/TableClass.dart';
 import '../Desktop/WidgetClass.dart';
 import 'MainInterface.dart';
 
@@ -39,10 +41,7 @@ class _InventoryPageState extends State<InventoryPage> {
 
 
   void changeActivePage(){
-    print("Changeing active page");
-
     widget.myFunction.call();
-
   }
 
 
@@ -56,9 +55,11 @@ class _InventoryPageState extends State<InventoryPage> {
     return Scaffold(
       floatingActionButton: MyFloatingActionButton(
         text: 'Add New Product',
-        onPressed: () {
+        onPressed: () async {
           activePage = "Product";
-          page =  ProductPage(data: {"Name":"test"},);
+          loadingDialog(context);
+          var productID = await FirebaseClass.getNewProductID();
+          page =  ProductPage(data: {"Name":"", "Model":"", "Category":"", "Quantity":"0", "Comment":"", "ProductID":productID});
           changeActivePage();
         },
       ),
@@ -147,6 +148,46 @@ class _InventoryPageState extends State<InventoryPage> {
       )
       ,
     );
+  }
+
+  Future<bool?> loadingDialog(BuildContext context) async {
+    // Add this variable to track the editing state
+    showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black38,
+      barrierDismissible: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            final dialog =  AlertDialog(
+                title: const Text('Loading...'),
+                content:  Padding( padding: const
+                EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                  child: Container(
+                    transform: Matrix4.translationValues(10, 5, 0),
+                    width: 200,
+                    height: 200,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 5.0,
+                      color: mainColor,
+                    ),
+                  ),
+                )
+
+
+            );
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pop();
+            });
+            return dialog;
+          },
+        );
+      },
+    );
+    return null;
+
+
+
   }
 
 

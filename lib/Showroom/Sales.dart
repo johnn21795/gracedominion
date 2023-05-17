@@ -3,6 +3,8 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:gracedominion/Desktop/WidgetClass.dart';
 
+import '../Classes/TableClass.dart';
+
 Size? screenSize;
 class SalesPage extends StatefulWidget {
   const SalesPage({Key? key}) : super(key: key);

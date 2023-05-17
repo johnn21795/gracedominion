@@ -54,6 +54,8 @@ dependencies:
   data_table_2: ^2.4.1
   sqflite_common_ffi: ^2.2.4
   file_picker: ^4.0.0
+  image_compression_flutter: ^1.0.3
+  fast_image_resizer: ^0.0.2
 
   flutter:
     sdk: flutter

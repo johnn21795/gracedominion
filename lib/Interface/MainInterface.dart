@@ -172,10 +172,15 @@ class _MainInterfaceState extends State<MainInterface> {
                 alignment: Alignment.bottomCenter,
                 width: 45,
                 height: 40,
-                decoration: const BoxDecoration(
+                decoration:  BoxDecoration(
                     image: DecorationImage(
-                        image: AssetImage(
-                            'assets/images/logo2.jpg')
+                        image:
+                        appName! == "Warehouse"?
+                        const AssetImage('assets/images/bluelogo.jpg'):
+                        appName! == "Showroom"?
+                        const AssetImage('assets/images/greenlogo.jpg'):
+                        const AssetImage('assets/images/redlogo.jpg'),
+
                     )
                 ),
 

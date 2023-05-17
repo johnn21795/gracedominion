@@ -158,7 +158,7 @@ class _MainInterfaceState extends State<MainInterface> {
                 decoration: const BoxDecoration(
                     image: DecorationImage(
                         image: AssetImage(
-                            'assets/images/logo1.jpg')
+                            'assets/images/greenlogo.jpg')
                     )
                 ),
 

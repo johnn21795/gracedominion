@@ -1,10 +1,14 @@
 
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../Classes/LogicClass.dart';
+import '../Classes/TableClass.dart';
 import '../Desktop/WidgetClass.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -24,19 +28,20 @@ class _ProductPageState extends State<ProductPage> {
   @override
   void dispose(){
     super.dispose();
-    MySavedPreferences.addPreference('scrollOffset', 0.0);
   }
   bool isEditing = false;
+  bool updateImage = false;
+  bool newProduct = false;
   final nameController = TextEditingController();
   final modelController = TextEditingController();
   final categoryController = TextEditingController();
   final quantityController = TextEditingController();
   final commentController = TextEditingController();
 
-  String cardLabel = "Search Payment";
+
   Color labelColor = WidgetClass.mainColor;
-  bool isSearching = false;
   String? imagePath;
+  late List<File?> files;
 
   void pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -45,6 +50,7 @@ class _ProductPageState extends State<ProductPage> {
     if (result != null) {
       PlatformFile file = result.files.first;
       String filePath = file.path!;
+      files = await CalculateClass().selectImage(filePath);
       // Use the selected file path for further processing
       setState(() {
         imagePath = file.path!;
@@ -59,8 +65,16 @@ class _ProductPageState extends State<ProductPage> {
 
 
   @override
+  void initState() {
+    if(widget.data["Name"] == "" && widget.data["Model"] == ""){
+      isEditing = true;
+      newProduct = true;
+    }
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    print(' name ${ widget.data}');
 
     screenSize = MediaQuery.of(context).size;
     return  Scaffold(
@@ -82,6 +96,7 @@ class _ProductPageState extends State<ProductPage> {
               child: SizedBox(
                   child: Text("Product History", style: TextStyle(fontFamily: "Claredon", fontWeight: FontWeight.bold, fontSize: screenSize!.height * 0.022),))
           ),
+
           Positioned(
               top:5,
               left: screenSize!.width * 0.02,
@@ -100,7 +115,7 @@ class _ProductPageState extends State<ProductPage> {
                   ),
                   child:  imagePath != null
                       ? Image.file(
-                    File(imagePath!),
+                    files[1]!,
                     fit: BoxFit.cover,
                   )
                       : const Image(
@@ -121,7 +136,7 @@ class _ProductPageState extends State<ProductPage> {
                     style: TextStyle(fontFamily: "Claredon",fontWeight: FontWeight.bold,fontSize: screenSize!.height * 0.022,),
                   ),
                   Text(
-                    "MK1001",
+                    widget.data["ProductID"],
                     style: TextStyle(fontFamily: "Claredon",fontSize: screenSize!.height * 0.022,),
                   ),
                 ],
@@ -129,13 +144,40 @@ class _ProductPageState extends State<ProductPage> {
             ),
           ),
           Positioned(
-              top: screenSize!.height * 0.2,
+              top: screenSize!.height * 0.15,
               left: screenSize!.width * 0.15,
-              child:MyCustomButton(
-                  text: "Choose Image",
-                  onPressed: pickFile,
-                  icon: FontAwesomeIcons.fileImage,
-                  size:  const Size(128,35)
+              child:Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MyCustomButton(
+                      text: "Choose Image",
+                      onPressed: pickFile,
+                      icon: FontAwesomeIcons.fileImage,
+                      size:  const Size(128,35)
+                  ),
+                  const SizedBox(height: 10,),
+                  Visibility(
+                    visible: !newProduct ? isEditing ? true : false: false,
+                    child: Row(
+                      children: [
+                        const Text('Update Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),),
+                        StatefulBuilder(builder: (context, setState){
+                          return  Center(
+                            child:  Switch(
+                                activeColor: mainColor,
+                                value: updateImage,
+                                onChanged: (value) {
+                                  updateImage = !updateImage;
+                                  setState((){});
+                                  // Do something when the switch button is toggled.
+                                },
+                              ),
+                          );}),
+                        //,
+                      ],
+                    ),
+                  ),
+                ],
               )
           ),
           Positioned(
@@ -163,7 +205,7 @@ class _ProductPageState extends State<ProductPage> {
                           suffixIcon: Icon(Icons.edit, color: mainColor,)),
                       )):
                   Text(
-                    widget.data.putIfAbsent("Name", () => ""),
+                    widget.data["Name"],
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -198,7 +240,7 @@ class _ProductPageState extends State<ProductPage> {
                     suffixIcon:  Icon(Icons.edit, color: mainColor,)),
               )):
                   Text(
-                    "YEG-2-4DG",
+                    widget.data["Model"],
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -232,7 +274,7 @@ class _ProductPageState extends State<ProductPage> {
                           ),
                           suffixIcon:  Icon(Icons.edit, color: WidgetClass.mainColor,)),
                       )):Text(
-                    "ELECTRIC GRIDDLE STANDING",
+                    widget.data["Category"],
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -267,7 +309,7 @@ class _ProductPageState extends State<ProductPage> {
                             suffixIcon:  Icon(Icons.edit, color: WidgetClass.mainColor,)),
                       )):
                   Text(
-                    "500",
+                    widget.data["Quantity"],
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -301,7 +343,7 @@ class _ProductPageState extends State<ProductPage> {
                             ),
                             suffixIcon:  Icon(Icons.edit, color: WidgetClass.mainColor,)),
                       )):Text(
-                    "Yellow Color",
+                    widget.data["Comment"],
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -316,11 +358,8 @@ class _ProductPageState extends State<ProductPage> {
               left: screenSize!.width * 0.02,
               child:MyCustomButton(
                   text:isEditing? "Save Product" : "Edit Product",
-                  onPressed: (){
-
-                    if(!isEditing){
-                      saveProductDialog(context);
-                    }
+                  onPressed: () async{
+                    isEditing ? await saveProductDialog(context) : isEditing = true;
                     setState(() {
 
                     });
@@ -341,41 +380,59 @@ class _ProductPageState extends State<ProductPage> {
     );
   }
 
-  void saveProductDialog(BuildContext context) {
-    showDialog(
+  Future<bool?> saveProductDialog(BuildContext context) async {
+   // Add this variable to track the editing state
+
+    return showDialog<bool>(
       context: context,
+      barrierColor: Colors.black,
+      barrierDismissible: isEditing,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Save Product'),
-          content: const Text('Confirm Save Product'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // User clicked on the Cancel button
-                isEditing = true;
-                Navigator.of(context).pop(false);
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // User clicked on the Confirm button
-                isEditing = false;
-                Navigator.of(context).pop(true);
-              },
-              child: Text('Confirm'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+
+              title: const Text('Save Product'),
+              content: !isEditing
+                  ? Padding(
+                padding: const EdgeInsets.only(
+                    top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                child: Container(
+                  transform: Matrix4.translationValues(10, 5, 0),
+                  width: 200,
+                  height: 200,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 5.0,
+                    color: mainColor,
+                  ),
+                ),
+              )
+                  : const Text('Confirm Save Product'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // User clicked on the Cancel button
+                    isEditing = true;
+                    Navigator.of(context).pop(false);
+                  },
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // User clicked on the Confirm button
+                    isEditing = false;
+                    setState((){});
+                    // Navigator.of(context).pop(true);
+                  },
+                  child: Text('Confirm'),
+                ),
+              ],
+            );
+          },
         );
       },
-    ).then((confirmed) {
-      if (confirmed != null && confirmed) {
-        // Action confirmed, perform the desired action here
-        // ...
-      } else {
-        // Action canceled or dismissed
-        // ...
-      }
-    });
+    );
   }
+
+
 }
