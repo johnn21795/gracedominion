@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_dart/auth.dart';
 import 'package:firebase_dart/core.dart'  ;
 import 'package:firebase_dart/implementation/pure_dart.dart' hide Platform;
@@ -32,26 +34,38 @@ class WindowsApplication{
 
   WindowsApplication()  {
     startApplication();
-    FirebaseApp app;
     //initialize firebase dart on windows...an alternative the real Firebase because Windows don't support Firebase at this time
     FirebaseDart.setup();
-    FirebaseStorage storage;
     Firebase.initializeApp(options: firebaseWindows).then((value) =>
     {
      //for storage
-    storage = FirebaseStorage.instanceFor(app: value),
-       print("storage ${storage.app}"),
+    FirebaseStorage.instanceFor(app: value),
+      //for Authentications and Logins
     FirebaseAuth.instanceFor(app: value),
     // MainClass.loadFireBaseAppInformation(),
     // MainClass.loadStaffInformation(),
-    },
-      onError:(f) => print("Error completing: $f"),
-    );
+    });
+
     // for FireStore Database
     try {
       Firestore.initialize(firebaseWindows.projectId);
     } catch (e) {
       print("FireStore Error $e");
+    }
+
+    //Directory for storing Images
+    Directory directory = Directory('${Platform.environment['USERPROFILE']}\\AppData\\Local\\CachedImages\\Thumbnails\\');
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+    directory = Directory('${Platform.environment['USERPROFILE']}\\AppData\\Local\\CachedImages\\Images\\');
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+    directory = Directory('C:\\Users\\Public\\TempImages\\');
+    directory.deleteSync(recursive: true);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
     }
   }
 

@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gracedominion/Showroom/Customers.dart';
+import 'package:gracedominion/Interface/Customers.dart';
 import 'package:gracedominion/Warehouse/Inventory.dart';
 import 'package:gracedominion/Showroom/Payments.dart';
 import 'package:gracedominion/Showroom/Sales.dart';
@@ -69,7 +69,7 @@ class _MainInterfaceState extends State<MainInterface> {
                   const SizedBox(height: 1,),
                   SizedBox(height:50, child: MyCustomButton(text: "Supply", onPressed:  (){activePage = "Supply"; page = const SupplyPage(); setState(() {});}, icon: FontAwesomeIcons.moneyCheckDollar, size: const Size(150, 42))),
                   const SizedBox(height: 1,),
-                  SizedBox(height:50, child: MyCustomButton(text: "Customers", onPressed:  (){activePage = "Customers"; page = const CustomersPage(); setState(() {});}, icon: FontAwesomeIcons.user, size: const Size(150, 42))),
+                  // SizedBox(height:50, child: MyCustomButton(text: "Customers", onPressed:  (){activePage = "Customers"; page = const CustomersPage(); setState(() {});}, icon: FontAwesomeIcons.user, size: const Size(150, 42))),
                   const SizedBox(height: 1,),
                   SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Records"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))),
 

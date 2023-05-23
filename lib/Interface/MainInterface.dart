@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gracedominion/Showroom/Customers.dart';
+import 'package:gracedominion/Interface/Customers.dart';
 import 'Inventory.dart';
 import 'package:gracedominion/Showroom/Payments.dart';
 import 'package:gracedominion/Showroom/Sales.dart';
@@ -28,6 +28,7 @@ class MainInterface extends StatefulWidget {
 String activePage = "Dashboard";
 Widget page = Container();
 Color mainColor = const Color(0xff000055);
+bool pageLoading = false;
 class _MainInterfaceState extends State<MainInterface> {
   List<bool> isHover = List.generate(6, (index) => false);
 
@@ -50,6 +51,7 @@ class _MainInterfaceState extends State<MainInterface> {
     username = map["Name"];
     appName = map["App"];
     WidgetClass.mainColor = mainColor;
+
     return Scaffold(
       body: Container(
         color: Colors.white,
@@ -83,7 +85,7 @@ class _MainInterfaceState extends State<MainInterface> {
 
                   appName! == "Warehouse"?
                   SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Records"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))):
-                  SizedBox(height:50, child: MyCustomButton(text: "Customer", onPressed:  (){activePage = "Customers"; page = const CustomersPage(); setState(() {});}, icon: FontAwesomeIcons.peopleGroup, size: const Size(150, 42))),
+                  SizedBox(height:50, child: MyCustomButton(text: "Customer", onPressed:  (){activePage = "Customers"; page =  CustomersPage(myFunction: changeState); setState(() {});}, icon: FontAwesomeIcons.peopleGroup, size: const Size(150, 42))),
                   const SizedBox(height: 1,),
 
                   appName! != "Warehouse"?
@@ -128,7 +130,7 @@ class _MainInterfaceState extends State<MainInterface> {
                     Expanded(
                         child: Container(
                           color:  const Color(0xFFEFEFEF),
-                          child: selectedPage(),
+                          child: selectedPage(context),
                         )),
                   ],
                 ),
@@ -145,7 +147,7 @@ class _MainInterfaceState extends State<MainInterface> {
   void changeState(){
 
     setState(() {
-    print("Testing Page");
+    print("changing MainInterface $pageLoading");
   });
 
 
@@ -232,9 +234,43 @@ class _MainInterfaceState extends State<MainInterface> {
       ],
     );
   }
+  Widget loadingDialog(BuildContext context)  {
+    // Add this variable to track the editing state
 
-  Widget selectedPage(){
-    return page;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            final dialog =  AlertDialog(
+                title: const Text('Loading...'),
+                content:  Padding( padding: const
+                EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                  child: Container(
+                    transform: Matrix4.translationValues(10, 5, 0),
+                    width: 200,
+                    height: 200,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 5.0,
+                      color: mainColor,
+                    ),
+                  ),
+                )
+
+
+            );
+            Future.delayed(const Duration(milliseconds: 1000), () async {
+              // var x = await loadDialogComplete();
+              // print("Var XX..... $x");
+              // if(x){
+              //   Navigator.of(context).pop();
+              // }
+
+            });
+            return dialog;
+          },
+        );
+  }
+
+  Widget selectedPage(BuildContext context) {
+    return pageLoading? loadingDialog(context) : page;
   }
 }
 

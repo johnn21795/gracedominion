@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../Classes/LogicClass.dart';
 import '../Interface/MainInterface.dart';
 import '../Interface/Product.dart';
 
@@ -14,13 +15,13 @@ import '../Interface/Product.dart';
 
 class WidgetClass{
   static Color defaultColor = Colors.black45;
-  static  Color mainColor = Color(0xff000077);
+  static  Color mainColor = const Color(0xff000077);
+  static Map<String, dynamic> sharedPreferences = {};
 }
 
 
 class MySavedPreferences {
   static final MySavedPreferences _instance = MySavedPreferences._internal();
-  static final Map<String, dynamic> _sharedPreferences = {};
 
   factory MySavedPreferences() {
     return _instance;
@@ -29,13 +30,11 @@ class MySavedPreferences {
   MySavedPreferences._internal();
 
   static void addPreference(String key, dynamic value) {
-    _sharedPreferences[key] = value;
-    print("key $key value $value");
+    WidgetClass.sharedPreferences[key] = value;
   }
 
   static dynamic getPreference(String key) {
-    dynamic value = _sharedPreferences[key];
-    print("get key $key value $value");
+    dynamic value = WidgetClass.sharedPreferences[key];
     return value ?? 0.0;
   }
 }
@@ -116,6 +115,69 @@ class MyCustomButtonState extends State<MyCustomButton> {
         fixedSize: widget.size,
         shape:widget.size.height == 42? RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)) : RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
       ),
+    );
+  }
+}
+
+class InventoryImage extends StatefulWidget {
+  final String productId;
+  final String imageType;
+
+  const InventoryImage({Key? key, required this.productId, required this.imageType}) : super(key: key);
+
+  @override
+  State<InventoryImage> createState() => _InventoryImageState();
+}
+
+class _InventoryImageState extends State<InventoryImage> {
+  late Future<Widget> futureImage;
+
+  @override
+  void initState() {
+    super.initState();
+    futureImage = FirebaseClass.getProductImage(widget.productId, widget.imageType);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Widget>(
+      future: futureImage,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Stack(
+           alignment: AlignmentDirectional.center,
+            fit:  widget.imageType == "Images" ? StackFit.expand :  StackFit.loose,
+            children: [
+              Image.asset(
+                'assets/images/placeholder.jpg',
+                fit:   BoxFit.cover,
+              ),
+               const Center(child: Text("Loading ...", style: TextStyle(fontSize: 11, color: Colors.grey),))
+            ],
+          );
+        } else if (snapshot.hasError) {
+          return Image.asset(
+            'assets/images/placeholder.jpg',
+            fit: BoxFit.cover,
+          );
+        } else if (!snapshot.hasData) {
+          return Image.asset(
+            'assets/images/placeholder.jpg',
+            fit: BoxFit.cover,
+          );
+        } else {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            verticalDirection: VerticalDirection.down,
+            children: <Widget>[
+              Expanded(
+                child: snapshot.data!,
+              ),
+            ],
+          );
+        }
+      },
     );
   }
 }

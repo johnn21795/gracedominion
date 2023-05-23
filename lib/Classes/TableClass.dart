@@ -1,6 +1,6 @@
-
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:gracedominion/Classes/LogicClass.dart';
 import 'package:intl/intl.dart';
 
 import '../Desktop/WidgetClass.dart';
@@ -11,29 +11,45 @@ class TableClass extends StatefulWidget {
   final Map<String, dynamic> tableColumns;
   final String tableName;
   final Function() myFunction;
-  const TableClass({super.key, required this.tableColumns, required this.tableName, required this.myFunction});
+  final String searchQuery;
+  const TableClass(
+      {super.key,
+      required this.tableColumns,
+      required this.tableName,
+      required this.myFunction,
+      this.searchQuery = ""});
 
   static List<Map<String, dynamic>> returnData = [];
-  static String lastCard = "";
-  static Future<List<Map<String, dynamic>>> loadPayment(String card) async {
 
-    card == "Inventory" ?
-    returnData = getInventoryData():
-    returnData = List.generate(30, (index) => {
-      "index":index+1, "Name":"CHUKWUDI", "Phone":08143255147, "Orders":"9 Orders", "Amount Spent" :"980,000,000", "Balance": "0"
-    });
+  static Future<List<Map<String, dynamic>>> loadProductTable(
+      String productID) async {
+    returnData = [];
+    returnData = await FirebaseClass.loadProductHistory(productID);
+    return returnData;
+  }
 
+  static Future<List<Map<String, dynamic>>> loadInventoryTable() async {
+    returnData = [];
+    returnData = await FirebaseClass.loadInventory();
+    return returnData;
+  }
+
+  static List<Map<String, dynamic>> addIndex(
+      int start, List<Map<String, dynamic>> returnData) {
     List<Map<String, dynamic>> newData = [];
     try {
-      newData = returnData.asMap().map((index, item) {
-        item['index'] = (index+1).toString();
-        return MapEntry(index, item);
-      }).values.toList();
+      newData = returnData
+          .asMap()
+          .map((index, item) {
+            item['index'] = (index + start + 1).toString();
+            return MapEntry(index, item);
+          })
+          .values
+          .toList();
     } catch (e, stacktrace) {
       print(e);
       print(stacktrace);
     }
-
     return newData;
   }
 
@@ -41,7 +57,8 @@ class TableClass extends StatefulWidget {
   State<TableClass> createState() => _TableClassState();
 }
 
-int lastIndex = 20;
+Map<String, int> lastIndex = {"Inventory": 15, "Customers": 20};
+
 class _TableClassState extends State<TableClass> {
   bool isLoading = false;
   int pageCount = 1;
@@ -49,88 +66,135 @@ class _TableClassState extends State<TableClass> {
 
   List<DataColumn> availableColumns = [];
 
-  List<DataCell>  availableCells = [];
-  // Map<String, dynamic> tableColumns = {"No" :0,"Image":1,"Name":2,"Category":3,"SKU":4,"Quantity":5,"Comment":6};
-
-  static late Future<List<Map<String, dynamic>>>? futureData ;
-
+  List<DataCell> availableCells = [];
+  late Future<List<Map<String, dynamic>>>? futureData;
+  static late Future<List<Map<String, dynamic>>>? inventoryData;
+  late Future<List<Map<String, dynamic>>>? searchData;
 
   @override
-  void initState()  {
-    print("_TableClassState  initializing...");
-    futureData = TableClass.loadPayment(widget.tableName);
-    _scrollController = ScrollController(
-      initialScrollOffset: _restoreScrollOffset(),
-    );
-    print("_scrollController initializing........ $_scrollController  _restoreScrollOffset ${_restoreScrollOffset()}");
+  void initState() {
+    print("_TableClassState  initializing...${widget.tableName}");
+
+    if (widget.tableName.contains("Product:")) {
+      futureData = TableClass.loadProductTable(
+          widget.tableName.replaceAll("Product:", ""));
+      lastIndex.putIfAbsent(widget.tableName, () => 20);
+    }
+    if (widget.tableName == "Inventory") {
+      var offset = _restoreScrollOffset();
+      if (offset < 1) {
+        inventoryData = TableClass.loadInventoryTable();
+      }
+      _scrollController = ScrollController(
+        initialScrollOffset: offset,
+      );
+    }
+
     _scrollController.addListener(_scrollListener);
     super.initState();
   }
+
   double _restoreScrollOffset() {
     return MySavedPreferences.getPreference('scrollOffset') ?? 0.0;
   }
 
   @override
   void dispose() {
-    print("_TableClassState  Disposing.......");
-
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
   }
 
-
-
   void _scrollListener() {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      // Reached the bottom of the list
       print("Reached Bottom");
-      loadMoreItems();
+      loadMoreItems(widget.tableName);
     }
-    print("Offset Bottom: ${_scrollController.offset} ....._scrollController  $_scrollController");
-    if(_scrollController.hasClients){
-      MySavedPreferences.addPreference('scrollOffset', _scrollController.offset);
+    if (_scrollController.hasClients) {
+      if (!widget.tableName.contains("Product:")) {
+        MySavedPreferences.addPreference(
+            'scrollOffset', _scrollController.offset);
+      }
     }
   }
 
-
-  void loadMoreItems() {
+  void loadMoreItems(String table) {
     if (!isLoading) {
       setState(() {
         isLoading = true;
       });
 
-      // Simulate loading delay
-      Future.delayed(Duration(seconds: 2), () {
-        setState(() {
-          // Generate new items for the next page
-          lastIndex += 10;
-          isLoading = false;
-        });
-      });
+      if (widget.tableName == "Inventory") {
+        if (widget.searchQuery.isEmpty) {
+          inventoryData?.then((value) async => {
+                value.addAll(TableClass.addIndex(
+                    value.length,
+                    await FirebaseClass.loadNextPage(
+                        MySavedPreferences.getPreference(
+                            "inventory.nextPageToken")))),
+                inventoryData?.then((value2) => {
+                      lastIndex[table] = value2.length,
+                      setState(() {
+                        isLoading = false;
+                      })
+                    })
+              });
+        }
+      }
     }
   }
 
-  void loadPayment(){
-    futureData = null;
-    futureData = TableClass.loadPayment(widget.tableName);
+  static String lastQuery = "";
+  Future<List<Map<String, dynamic>>> searchInventory(String query) async {
+    return FirebaseClass.searchInventory(query.trim());
   }
-
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+    lastIndex.putIfAbsent(widget.tableName, () => 20);
     setAvailableColumns();
+    if (widget.tableName == "Inventory") {
+      if (widget.searchQuery.isNotEmpty) {
+        if (lastQuery != widget.searchQuery) {
+          futureData = searchInventory(widget.searchQuery);
+          lastQuery = widget.searchQuery;
+        }
+      } else {
+        futureData = inventoryData;
+      }
+    }
+    else {
+      futureData = inventoryData;
+    }
+
     return FutureBuilder(
       future: futureData,
+      // future: widget.tableName == "Inventory"
+      //     ? widget.searchQuery.isNotEmpty
+      //     ? searchData
+      //     : inventoryData
+      //     : futureData,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-
-          return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AlertDialog(
+              title: const Text('Searching...'),
+              content: Padding(
+                padding: const EdgeInsets.only(
+                    top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                child: Container(
+                  transform: Matrix4.translationValues(10, 5, 0),
+                  width: 200,
+                  height: 200,
+                  child: CircularProgressIndicator(strokeWidth: 5.0,color: mainColor,),
+                ),
+              ));
+        } else if (snapshot.hasError) {
+          return const Text("Error in fetching Data");
+        } else if (!snapshot.hasData) {
+          return const Text("No Data Available");
         } else {
-
-
           return Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +202,7 @@ class _TableClassState extends State<TableClass> {
             children: <Widget>[
               Expanded(
                 child: Container(
-                    padding: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.fromLTRB(5, 5, 5, 30),
                     child: bodyData3(snapshot.data!, size)),
               )
             ],
@@ -154,14 +218,22 @@ class _TableClassState extends State<TableClass> {
       width: size.width * 0.9,
       child: DataTable2(
           scrollController: _scrollController,
-          headingTextStyle:   TextStyle(backgroundColor: WidgetClass.mainColor),
+          headingTextStyle: TextStyle(backgroundColor: WidgetClass.mainColor),
           headingRowColor: MaterialStateProperty.all(WidgetClass.mainColor),
-          border:  TableBorder(
+          border: TableBorder(
             left: BorderSide(color: WidgetClass.mainColor),
             right: BorderSide(color: WidgetClass.mainColor),
           ),
           horizontalMargin: 0,
           headingRowHeight: 40,
+          empty: Center(
+              child: Text(
+            "No Data in Table",
+            style: TextStyle(
+                fontFamily: "Claredon",
+                fontWeight: FontWeight.bold,
+                fontSize: size.height * 0.022),
+          )),
           dataRowHeight: 70,
           dividerThickness: 3,
           columnSpacing: 0,
@@ -170,693 +242,245 @@ class _TableClassState extends State<TableClass> {
           smRatio: 0.4,
           lmRatio: 2,
           columns: availableColumns,
-          rows: payment.take(lastIndex)
-              .map((e) => DataRow(
-              cells: widget.tableName == "Inventory" ? setInventoryCells(e, payment.indexOf(e)): setCustomerCells(e) ) ).toList()
-
-
-      ),
+          rows: payment
+              .take(lastIndex[widget.tableName]!)
+              .map((e) => DataRow(cells:setTableCells(e, payment.indexOf(e), widget.tableName)))
+              .toList()),
     );
   }
 
-  void setAvailableColumns(){
+  void setAvailableColumns() {
     availableColumns = [];
-    // var mapEntries = widget.tableColumns.entries.toList()
-    //   ..sort((a, b) => a.value.compareTo(b.value));
-    // tableColumns
-    //   ..clear()
-    //   ..addEntries(mapEntries);
-
-    for (var element in  widget.tableColumns.keys) {
-      availableColumns.add(
-          element == "No"? DataColumn2(
-            label:  Center(child: Text(element)),
-            fixedWidth: 50,
-            onSort: (_, __) {
-            },
-          ):
-          DataColumn2(
-            label:  Center(child: Text(element)),
-            size:   widget.tableColumns[element],
-            // size:  element == "Image" || element == "Quantity"  || element == "SKU" || element == "Comment"? ColumnSize.S :  element == "Name"? ColumnSize.L:  ColumnSize.M,
-            onSort: (_, __) {
-            },
-          )
-      );
+    for (var element in widget.tableColumns.keys) {
+      availableColumns.add(element == "No"
+          ? DataColumn2(label: Center(child: Text(element)),fixedWidth: 50,)
+          : DataColumn2(label: Center(child: Text(element)), size: widget.tableColumns[element]));
     }
-
   }
+
   final dateFormat = DateFormat('dd-MM-yyyy');
 
-  List<DataCell> setAvailableCells(e){
-    print("Setting Available Cells");
-    availableCells = [];
-    for (var element in  widget.tableColumns.keys) {
-
-      element == "No"? element = "index": element;
-
-      availableCells.add(
-        element == "Image"?  imageDataCell(e):
-        element == "Name"? productNameDataCell(e)
-            :
-        DataCell(
-          Center(child:
-          Text(
-              element == "Date"? dateFormat.format(DateTime.parse('${e["Date"]}')) : '${e[element]}'
-          )
-          ),
-        ),
-      );
-    }
-
-
-    return availableCells;
-  }
 
   int countIndex = 0;
-  List<DataCell> setInventoryCells(e, int indexOf) {
-    print(" Inventory Index $indexOf  greater than lastIndex $lastIndex" );
-    availableCells = [];
-    for (var element in  widget.tableColumns.keys) {
-      element == "No"? element = "index": element;
-      indexOf+1 == lastIndex ?
-      availableCells.add(
-          loadingDataCell(e)
-      ):
-      availableCells.add(
-          element == "Image"?  imageDataCell(e):
-          element == "Name"? productNameDataCell(e):defaultDataCell(e, element)
-      )
-      ;
 
-      ;
+  List<DataCell> setTableCells(e, int indexOf, String table) {
+    availableCells = [];
+    if (table.contains("Product:")) {
+      availableCells = setProductCells(e, indexOf);
+    }
+    if (table.contains("Inventory")) {
+      availableCells = setInventoryCells(e, indexOf);
     }
     return availableCells;
   }
 
-  List<DataCell> setCustomerCells(e){
-    print("Setting Customers Cells");
+  List<DataCell> setProductCells(e, int indexOf) {
+    print(" ProductCell Index $indexOf  greater than lastIndex $lastIndex");
     availableCells = [];
-    for (var element in  widget.tableColumns.keys) {
-      element == "No"? element = "index": element;
-      availableCells.add(
-          element == "Name"? customerNameDataCell(e):defaultDataCell(e, element)
-      );
+    for (var element in widget.tableColumns.keys) {
+      element == "No" ? element = "index" : element;
+      indexOf + 1 == lastIndex[widget.tableName]
+          ? availableCells.add(loadingDataCell(e))
+          : availableCells.add(element == "Customer"
+              ? productCustomerDataCell(e)
+              : defaultDataCell(e, element));
+    }
+    return availableCells;
+  }
+
+  List<DataCell> setInventoryCells(e, int indexOf) {
+    availableCells = [];
+    for (var element in widget.tableColumns.keys) {
+      element == "No" ? element = "index" : element;
+      indexOf + 1 == lastIndex[widget.tableName]
+          ? availableCells.add(loadingDataCell(e))
+          : availableCells.add(element == "Image"
+              ? imageDataCell(e)
+              : element == "Name"
+                  ? productNameDataCell(e)
+                  : element == "Quantity"
+                      ? productQtyDataCell(e)
+                      : defaultDataCell(e, element));
+    }
+    return availableCells;
+  }
+
+  List<DataCell> setCustomerCells(e) {
+    availableCells = [];
+    for (var element in widget.tableColumns.keys) {
+      element == "No" ? element = "index" : element;
+      availableCells.add(element == "Name"? customerNameDataCell(e): defaultDataCell(e, element));
     }
     return availableCells;
   }
 
   //Data Cells
-  DataCell imageDataCell(e){
+  DataCell imageDataCell(e) {
     return DataCell(
-      StatefulBuilder(builder: (context, setState){
+      StatefulBuilder(builder: (context, setState) {
         return GestureDetector(
           onTap: () {
-            print(' enabled ${e["Name"]}');
-            returnData(
-                {"Name": e["Name"]?? "",
-                  "Offset":MySavedPreferences.getPreference("scrollOffset"),
-                  "Model":e["Model"]?? "",
-                  "Category":e["Category"]?? "",
-                  "Quantity":e["Quantity"]?? "0",
-                  "Comment":e["Comment"]?? "",
-                  "ProductID":e["ProductID"]?? "",
-                });
-            setState((){});
+            returnData({
+              "Name": e["Name"] ?? "",
+              "Offset": MySavedPreferences.getPreference("scrollOffset"),
+              "Model": e["Model"] ?? "",
+              "Category": e["Category"] ?? "",
+              "Quantity": e["Quantity"] ?? "0",
+              "Comment": e["Comment"] ?? "",
+              "ProductID": e["ProductID"] ?? "",
+            });
+            setState(() {});
           },
-          child: const Center(
+          child: Center(
             child: Padding(
-              padding: EdgeInsets.all(3.0),
-              child: Image(
-                image: AssetImage('assets/images/placeholder.jpg'),
-                fit: BoxFit.cover,
-              ),
-            ),
+                padding: const EdgeInsets.all(3.0),
+                child: InventoryImage(productId: "${e["ProductID"]}",imageType: "Thumbnail", )
+                ),
           ),
-        );}
-      ),
-    );
-  }
-  DataCell loadingDataCell(e){
-    return DataCell(
-      StatefulBuilder(builder: (context, setState){
-        return const Center(
-          child: Padding(
-              padding: EdgeInsets.all(3.0),
-              child: CircularProgressIndicator()
-          ),
-        );}
-      ),
+        );
+      }),
     );
   }
 
-  void returnData(Map<String, dynamic> data){
+  DataCell loadingDataCell(e) {
+    return DataCell(
+      StatefulBuilder(builder: (context, setState) {
+        return Center(
+          child: Padding(
+              padding: const EdgeInsets.all(3.0),
+              child: CircularProgressIndicator(
+                color: mainColor,
+              )),
+        );
+      }),
+    );
+  }
+
+  void returnData(Map<String, dynamic> data) {
     activePage = "Product";
-    page =  ProductPage(data:data);
+    page = ProductPage(data: data);
     widget.myFunction.call();
   }
 
   //Inventory DataCells
-  DataCell productNameDataCell(e){
-    return DataCell(
-        StatefulBuilder(builder: (context, setState){
-          return GestureDetector(
-            onTap: () {
-              print(' enabled ${e["Name"]}');
-              // {"Name":"", "Model":"", "Category":"", "Quantity":"0", "Comment":""}
-              returnData(
-                  {"Name": e["Name"]?? "",
-                    "Offset":MySavedPreferences.getPreference("scrollOffset"),
-                    "Model":e["Model"] ?? "",
-                    "Category":e["Category"]?? "",
-                    "Quantity":e["Quantity"]?? "0",
-                    "Comment":e["Comment"]?? "",
-                    "ProductID":e["ProductID"]?? "",
-                  });
+  DataCell productNameDataCell(e) {
+    return DataCell(StatefulBuilder(builder: (context, setState) {
+      return GestureDetector(
+        onTap: () {
+          print(' enabled ${e["Name"]}');
+          returnData({
+            "Name": e["Name"] ?? "",
+            "Offset": MySavedPreferences.getPreference("scrollOffset"),
+            "Model": e["Model"] ?? "",
+            "Category": e["Category"] ?? "",
+            "Quantity": e["Quantity"] ?? "0",
+            "Comment": e["Comment"] ?? "",
+            "ProductID": e["ProductID"] ?? "",
+          });
 
-              // setState((){});
-            },
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(left: 15.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${e["Name"]}',style:const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Text('Product ID: ${e["ProductID"]}',style: const TextStyle(color: Colors.grey,fontWeight: FontWeight.bold,fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+      );
+    }), showEditIcon: false);
+  }
+
+  DataCell productQtyDataCell(e) {
+    return DataCell(StatefulBuilder(builder: (context, setState) {
+      return GestureDetector(
+        onTap: () {
+          print(' enabled ${e["Name"]}');
+
+        },
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('${e["Quantity"]}',style:const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), ),
+              Text( 'SR:${e["Showroom"]} \nWH:${e["Warehouse"]}', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,fontStyle: FontStyle.italic), ),
+            ],
+          ),
+        ),
+      );
+    }), showEditIcon: false);
+  }
+
+  DataCell customerNameDataCell(e) {
+    return DataCell(StatefulBuilder(builder: (context, setState) {
+      return GestureDetector(
+        onDoubleTap: () {
+          setState(() {});
+        },
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${e["Name"]}',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('${e["Name"]}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children:  [
-                          Text('Product ID:', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
-                          Text("${e["ProductID"]}", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
-
-                        ],
+                    children: const [
+                      Text('Customer ID:', style: TextStyle(color: Colors.black54,fontWeight: FontWeight.bold,fontStyle: FontStyle.italic),),
+                      Text(
+                        '21795',style: TextStyle(color: Colors.black54,fontStyle: FontStyle.italic,fontWeight: FontWeight.bold),
                       ),
-                      const Text('Model:Yellow Color', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
-                      const SizedBox()
                     ],
                   ),
+                  const Text('Last Order:25-05-2023', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold,fontStyle: FontStyle.italic)),
+                  const SizedBox()
                 ],
               ),
-            ),
-          );}
+            ],
+          ),
         ),
-        showEditIcon: false);
+      );
+    }), showEditIcon: false);
   }
-  DataCell customerNameDataCell(e){
-    return DataCell(
-        StatefulBuilder(builder: (context, setState){
-          return GestureDetector(
-            onDoubleTap: () {
 
-              setState((){});
-            },
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${e["Name"]}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: const [
-                          Text('Customer ID:', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic),),
-                          Text('21795', style: TextStyle(color: Colors.black54, fontStyle: FontStyle.italic,  fontWeight: FontWeight.bold),),
-                        ],
-                      ),
-                      const Text('Last Order:25-05-2023', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold,  fontStyle: FontStyle.italic)),
-                      const SizedBox()
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );}
+//Product DataCells
+  DataCell productCustomerDataCell(e) {
+    return DataCell(StatefulBuilder(builder: (context, setState) {
+      return GestureDetector(
+        onTap: () {
+          print(' enabled ${e["Customer"]}');
+        },
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('${e["Customer"]}',style:const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),),
+              Text( '${e["Customer"]}' == 'NewStock'? '': 'Order No: ${e["Order"]}', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),),
+            ],
+          ),
         ),
-        showEditIcon: false);
+      );
+    }), showEditIcon: false);
   }
 
-
-  DataCell defaultDataCell(e, element){
-    return DataCell(
-        Center(child:
-        Text(
-            element == "Date"? dateFormat.format(DateTime.parse('${e["Date"]}')) : '${e[element]}'
-        )
-        )
-    );
+  DataCell defaultDataCell(e, element) {
+    return DataCell(Center(
+        child: Text(element == "Date"
+            ? dateFormat.format(DateTime.parse('${e["Date"]}'))
+            : '${e[element]}')));
   }
-
-}
-
-
-getInventoryData() {
-
-  List<Map<String, String>> returnDatas;
-  returnDatas = [
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "BREAD PAN", "Category": "OLD TYPE" },
-    {"Name": "BREAD PAN", "Category": "NEW TYPE"},
-    {"Name": "GAS POPCORN 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 12OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 16OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN ELECTRIC YELLOW", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 16OZ HP-16B", "Category": "POPCORN MACHINE"},
-    {"Name": "ELECTRIC POPCORN MACHINE RED", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN POT 8OZ", "Category": "POPCORN MACHINE"},
-    {"Name": "POPCORN MACHINE 12OZ HP-12B", "Category": "POPCORN MACHINE"},
-    {"Name": "STAINLESS STEEL WORK TABLE WHT-2-712S/BN-W03 4FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-615RP/BN-W04 WITH SPLASH BACK 5FEET", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-515TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE 6FT BN-W03", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-718W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723S 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-712W/HWT-3-612W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-69TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 5FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE CORNER HWT-69C", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 4FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-612TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-610TS WITH OVER SHELVE 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE NOBILE HWT-3-615W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-618TS WITH OVER SHELVE 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-618W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-713TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W05 6FT 3STEPS", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 7FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-713W 4FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-723W 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-621TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-623TS WITH OVER SHELVE 6FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-723TS WITH OVER SHELVE 9FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 10FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-WO4 WITH SPLASH BACK 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-721TS WITH OVER SHELVE 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 8FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE BN-W03 3FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE MOBILE HWT-3-615W 5FT", "Category": "WORK TABLE"},
-    {"Name": "STAINLESS STEEL WORK TABLE HWT-2-719TS WITH OVER SHELVE 7FT", "Category": "WORK TABLE"}
-  ];
-
-
-  return returnDatas;
-
 }

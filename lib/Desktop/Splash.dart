@@ -19,7 +19,7 @@ String status = "Starting Up...";
 class _SplashState extends State<Splash> {
   @override
   void initState() {
-    // TODO: implement initState
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) { initialize();});
   }
 
@@ -115,12 +115,6 @@ class _SplashState extends State<Splash> {
         if(count == 30){
           status = "Connecting to Database..";
         }
-        // if(count == 10){
-        //   status = "Connecting to Database";
-        // }
-        // if(count == 10){
-        //   status = "Connecting to Database";
-        // }
 
       });
     }
@@ -138,7 +132,6 @@ void _progressIsolate(SendPort sendPort) async{
   double progress = 0.0;
   await for (final now in Stream.periodic(
       const Duration(milliseconds: 50),(_) => {progress += 0.03}).takeWhile((element) => element.last <= 1.0 )) {
-    // print("now ${now.last}");
     sendPort.send(now.last);
   }
   Isolate.exit(sendPort);

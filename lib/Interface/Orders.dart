@@ -1,10 +1,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gracedominion/Showroom/MainInterface.dart';
+// import 'package:gracedominion/Showroom/MainInterface.dart';
 
 import '../Desktop/WidgetClass.dart';
 import 'Inventory.dart';
+import 'MainInterface.dart';
+
 
 
 Size? screenSize;
@@ -24,7 +26,7 @@ class _OrderPageState extends State<OrderPage> {
   FocusNode customerNode = FocusNode();
   FocusNode productNode = FocusNode();
 
-  Color labelColor = MainInterface.mainColor;
+  Color labelColor =  WidgetClass.mainColor;
   bool isSearching = false;
   bool viewCustomers = false;
   bool viewProducts = false;
@@ -45,6 +47,7 @@ class _OrderPageState extends State<OrderPage> {
   @override
   void initState() {
     super.initState();
+    pageLoading = false;
     customerNode.addListener(_onFocusChange);
     productNode.addListener(_onFocusChange);
   }
@@ -72,10 +75,10 @@ class _OrderPageState extends State<OrderPage> {
     return Scaffold(
       body:  Stack(
         children:[
-          const Positioned(
+           Positioned(
             top: 20,
             left: 15,
-            child: Text("Customer Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MainInterface.mainColor),)),
+            child: Text("Customer Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: WidgetClass.mainColor),)),
           Positioned(
               top: 45,
               left: 15,
@@ -127,7 +130,7 @@ class _OrderPageState extends State<OrderPage> {
                         padding: EdgeInsets.zero,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5FFF5),
-                            border: Border.all(color: MainInterface.mainColor, width: 1.0),
+                            border: Border.all(color:  WidgetClass.mainColor, width: 1.0),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,7 +157,7 @@ class _OrderPageState extends State<OrderPage> {
            Positioned(
               top: screenSize!.height * 0.4,
               left: 15,
-              child: const Text("Product Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MainInterface.mainColor),)),
+              child:  Text("Product Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color:  WidgetClass.mainColor),)),
           Positioned(
               top: screenSize!.height * 0.4 + 20,
               left: 15,
@@ -317,7 +320,7 @@ class _OrderPageState extends State<OrderPage> {
               width: screenSize!.width * 0.5,
               decoration: BoxDecoration(
                   color: const Color(0xFFF8FFF8),
-                  border: Border.all(color: MainInterface.mainColor, width: 1.0),
+                  border: Border.all(color:  WidgetClass.mainColor, width: 1.0),
 
 
                 ),
