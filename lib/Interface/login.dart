@@ -1,11 +1,14 @@
 
 
 import 'dart:io';
-import 'package:gracedominion/AppRoutes.dart';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:gracedominion/Classes/LogicClass.dart';
+import 'package:gracedominion/Desktop/WidgetClass.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../AppRoutes.dart';
 import '../Classes/MainClass.dart';
 
 
@@ -22,6 +25,7 @@ class _LoginState extends State<Login> {
   void initState() {
   if(Platform.isWindows){
     windowManager.setSize(const Size(1300, 700), animate: true);
+    windowManager.setMinimumSize(const Size(1300, 700));
     windowManager.center(animate: true);
     windowManager.focus();
   }
@@ -30,8 +34,10 @@ class _LoginState extends State<Login> {
 
 
   bool pass = true;
+  bool loggingIn = false;
   String id = "James";
-  TextEditingController controller = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +60,7 @@ class _LoginState extends State<Login> {
 
 
     MainClass.loadStaffInformation();
-    // if(stats.values.first.isDenied){
-    //   requestPermissions();
-    // }
+
 
   }
 
@@ -75,12 +79,12 @@ Widget mobileView(){
             ClipPath(
               clipper: CustomClipPath(),
               child: Container(
-                height: screenSize.height / 2.4,
+                height: screenSize.height * 0.8,
                 decoration: const BoxDecoration(
                     shape: BoxShape.rectangle,
                     image: DecorationImage(
                         image: AssetImage(
-                            'assets/images/backgrounds/purplegold.jpg'),
+                            'assets/images/curve.jpg'),
                         fit: BoxFit.fill,
                         opacity: 0.35,
                         colorFilter: ColorFilter.mode(
@@ -165,7 +169,7 @@ Widget mobileView(){
             SizedBox(
               width: screenSize.width * 0.8,
               child:  TextField(
-                controller: controller,
+                controller: emailController,
                 onChanged: (value){
                   id = value;
                 },
@@ -187,6 +191,7 @@ Widget mobileView(){
               child: SizedBox(
                 width: screenSize.width * 0.8,
                 child: TextField(
+                  controller: passController,
                   obscureText: pass,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.key),
@@ -253,7 +258,7 @@ Widget mobileView(){
                     shape: BoxShape.rectangle,
                     image: DecorationImage(
                         image: AssetImage(
-                            'assets/images/backgrounds/purplegold.jpg'),
+                            'assets/images/curve.jpg'),
                         fit: BoxFit.fill,
                         opacity: 0.35,
                         colorFilter: ColorFilter.mode(
@@ -312,39 +317,45 @@ Widget desktopView(){
     body: Stack(
       children: [
         Positioned(
-           left: screenSize.width * 0.404,
-          right: 10,
+           left:0,
+          right: 0,
           child: SizedBox(
             width : screenSize.width ,
-            child: Container(
-              height: screenSize.width * 0.6,
-              decoration: const BoxDecoration(
-                // backgroundBlendMode: BlendMode.dstOver,
-                image: DecorationImage(
-                    fit: BoxFit.cover,
-                    image: AssetImage('assets/images/backgrounds/purple.jpg')
-                ),
-                color: Colors.grey,
-              ),
+            height : screenSize.height ,
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+              child:  const Image(image:AssetImage('assets/images/backgrounds/login.jpg'), fit: BoxFit.cover,),
             ),
           ),
         ),
         Positioned(
-          left:  10,
-          child: SizedBox(
-            height: screenSize.height,
-            width : screenSize.width / 2.5,
+          left:  screenSize.width * 0.32,
+          top: screenSize.height * 0.05,
+          child: Container(
+            // color: Colors.white70,
+            decoration:
+            const BoxDecoration(
+              color: Colors.white54,
+              boxShadow: [
+              BoxShadow(
+                  color: Color(0x33FFFFFF),
+                  offset: Offset(1.5, 1.5),
+                  blurRadius: 3.0,
+                  spreadRadius: 2.5
+              )
+            ],),
+            width : screenSize.width / 3,
             child: Column(
               children: [
                 ClipPath(
                   clipper: CustomClipPath(),
                   child: Container(
-                    height: screenSize.height / 2.5,
+                    height: screenSize.height / 3,
                     decoration: const BoxDecoration(
                         shape: BoxShape.rectangle,
                         image: DecorationImage(
                             image: AssetImage(
-                                'assets/images/backgrounds/purple.jpg'),
+                                'assets/images/curve.jpg'),
                             fit: BoxFit.fill,
                             opacity: 0.35,
                             colorFilter: ColorFilter.mode(
@@ -354,16 +365,16 @@ Widget desktopView(){
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Container(
-                            height: screenSize.width / 7,
-                            width: screenSize.width / 7,
+                            height: screenSize.width / 9,
+                            width: screenSize.width / 9,
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               backgroundBlendMode: BlendMode.dstOver,
                               image: DecorationImage(
                                   colorFilter: ColorFilter.mode(
-                                      Colors.purpleAccent, BlendMode.srcIn),
+                                      Colors.red, BlendMode.dstOver),
                                   fit: BoxFit.scaleDown,
-                                  image: AssetImage('assets/images/purple.png')),
+                                  image: AssetImage('assets/images/redlogo.jpg')),
                               color: Colors.grey,
                             ),
                           ),
@@ -378,12 +389,12 @@ Widget desktopView(){
                 Container(
                   alignment: Alignment.topLeft,
                   transform: Matrix4.translationValues(0, -40, 0),
-                  child: const Padding(
-                    padding: EdgeInsets.only(left: 50.0),
+                  child:  Padding(
+                    padding: const EdgeInsets.only(left: 50.0),
                     child: Text(
                       'Login',
                       style: TextStyle(
-                          color: Color(0xff50025d),
+                          color: Colors.red[800],
                           fontSize: 25,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Claredon'),
@@ -392,18 +403,22 @@ Widget desktopView(){
                 ),
 
                 SizedBox(
-                  width: screenSize.width * 0.3,
+                  width: screenSize.width * 0.25,
                   child:  TextField(
-                    controller: controller,
+                    controller: emailController,
                     onChanged: (value){
                       id = value;
                     },
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.account_circle_outlined),
+                    decoration:  InputDecoration(
+                      focusColor:Colors.red[900],
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.red[900]!, width: 2.0),
+                      ),
+                      prefixIcon: Icon(Icons.account_circle_outlined,color: Colors.red[900],),
                       hintText: "Enter Name or ID ",
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
-                      label: Text(
-                        "Name",
+                      label: const Text(
+                        "Name or Email",
                         style: TextStyle(textBaseline: TextBaseline.alphabetic),
                       ),
                     ),
@@ -414,18 +429,34 @@ Widget desktopView(){
                 ),
                 Center(
                   child: SizedBox(
-                    width: screenSize.width * 0.3,
+                    width: screenSize.width * 0.25,
                     child: TextField(
+                      onSubmitted: (string) async {
+                        loggingIn = true;
+                        setState(() {});
+                        loginUser(emailController.text, passController.text).then((value) => {
+                          loggingIn = false,
+                        value["Successful"] ? loginSuccessful(value):loginFailed(value),
+                          setState(() {})
+
+                        });
+
+                      },
+                      controller: passController,
                       obscureText: pass,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.key),
+                        focusColor: Colors.red[900],
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.red[900]!, width: 2.0),
+                        ),
+                        prefixIcon:  Icon(Icons.key, color: Colors.red[900],),
                         suffixIcon: GestureDetector(
                             onTap: () {
                               setState(() {
                                 pass = !pass;
                               });
                             },
-                            child: Icon(pass? Icons.visibility : Icons.visibility_off)),
+                            child: Icon(pass? Icons.visibility : Icons.visibility_off, color: Colors.red[900],)),
                         hintText: "Password",
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
                         label: const Text(
@@ -443,56 +474,47 @@ Widget desktopView(){
                 ),
                 Center(
                   child: SizedBox(
-                    width: screenSize.width * 0.3,
-                    height: 27,
+                    width: screenSize.width * 0.25,
+                    height: 45,
                     child: ElevatedButton(
-                      onPressed: ()  async {
-                        Navigator.pushReplacementNamed(context,AppRoutes.operatorDashboard,
-                            arguments:{"Color":const Color(0xFF000099), "Name":controller.text, "App":"Warehouse"});
+                      onPressed: ()  async{
+                        loggingIn = true;
+                        setState(() {});
+                        loginUser(emailController.text, passController.text).then((value) => {
+                          loggingIn = false,
+                          value["Successful"] ? loginSuccessful(value):loginFailed(value),
+                          setState(() {})
+                        });
+
                       },
-                      child: const Text("Warehouse Login"),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                        backgroundColor: Colors.red[900],
+                      ),
+
+                      child:loggingIn? const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text("Logging In...", style: TextStyle(fontSize: 16),),
+                          CircularProgressIndicator(
+                              backgroundColor: Colors.white30,
+                              strokeWidth: 5.0,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ): const Text("Login"),
                     ),
                   ),
                 ),
-                Center(
-                  child: SizedBox(
-                    width: screenSize.width * 0.3,
-                    height: 27,
-                    child: ElevatedButton(
-                      onPressed: ()  async {
-                        Navigator.pushReplacementNamed(context, AppRoutes.operatorDashboard,
-                            arguments: {"Color":const Color(0xFF005500), "Name":controller.text, "App":"Showroom"});
-                      },
-                      child: const Text("ShowRoom Login"),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: SizedBox(
-                    width: screenSize.width * 0.3,
-                    height: 27,
-                    child: ElevatedButton(
-                      onPressed: ()  async {
-                        Navigator.pushReplacementNamed(context,  AppRoutes.operatorDashboard,
-                            arguments:{"Color":const Color(0xFF550000), "Name":controller.text, "App":"Management"});
-                      },
-                      child: const Text("Management Login"),
-                    ),
-                  ),
-                ),
-                // Expanded(
-                //   flex: 3,
-                //   child: Container(),
-                // ),
                 ClipPath(
                   clipper: CustomClipPath2(),
                   child: Container(
-                    height: screenSize.height / 5.2,
+                    height: screenSize.height / 6,
                     decoration: const BoxDecoration(
                         shape: BoxShape.rectangle,
                         image: DecorationImage(
                             image: AssetImage(
-                                'assets/images/backgrounds/purple.jpg'),
+                                'assets/images/curve.jpg'),
                             fit: BoxFit.fill,
                             opacity: 0.35,
                             colorFilter: ColorFilter.mode(
@@ -500,12 +522,14 @@ Widget desktopView(){
                     child: Stack(
                       children: [
                         Positioned(
-                          bottom: 10,
-                          width: screenSize.width / 2.5,
-                          child: Column(
+                          bottom: 20,
+                          left: screenSize.width * 0.05,
+
+                          child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.max,
-                            children: const [
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Text(
                                 'Powered By Xenaya',
                                 style: TextStyle(
@@ -547,7 +571,57 @@ Widget desktopView(){
     ),
   );
 }
+void loginFailed(dynamic value) {
+
+  String error = "";
+  try {
+    var err = value["Error"]!["error"];
+    switch(err.code.toString()){
+      case "5":
+        error = "User Not Found";
+        break;
+      case "14":
+        error = "No Internet Connection";
+        break;
+      case "2":
+        error = "Slow Connection, retry";
+        break;
+    }
+  } catch (e) {
+    var err = value["Error"];
+    if(err.toString().contains("No element")){
+      error = "User Not Found";
+    }
+    else  if(err.toString().contains("wrong-password")){
+      error = "Password is Incorrect";
+    }
+    else  if(err.toString().contains("too-many-requests")){
+      error = "Too Many Attempt....Try again in 5 Minutes";
+    }
+    else{
+      error = err.toString();
+    }
+
+  }
+  ScaffoldMessenger.of(context).showSnackBar( SnackBar(backgroundColor: Colors.black87, content: Text("Login Failed! $error", style:  const TextStyle(fontSize: 14, color: Colors.white), ), duration:const Duration(milliseconds: 2000) ,),);
+
 }
+
+void loginSuccessful(dynamic value){
+  Navigator.pushReplacementNamed(context,AppRoutes.operatorDashboard,
+      arguments:{"Color":value["Department"] == "Management"?const Color(0xFF550000):value["Department"] == "Showroom"?const Color(0xFF005500): const Color(0xFF000099), "Name":value["Name"],"Email":value["Email"], "App":value["Department"]});
+
+}
+
+
+}
+
+Future<Map<String, dynamic>> loginUser(String email, String password) async {
+  var result = FirebaseClass.signInUser(email, password);
+  return result;
+
+}
+
 
 
 

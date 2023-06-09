@@ -14,10 +14,10 @@ import 'package:file_picker/file_picker.dart';
 import 'MainInterface.dart';
 
 Size? screenSize;
+Map<String, dynamic> selectedProductOrder = {};
+String? productID;
 class ProductPage extends StatefulWidget {
   final Map<String, dynamic> data;
-  // final Function() myFunction;
-  // const ProductPage({Key? key, required this.data, required this.myFunction}) : super(key: key);
   const ProductPage({Key? key, required this.data}) : super(key: key);
 
   @override
@@ -34,15 +34,25 @@ class _ProductPageState extends State<ProductPage> {
   bool updateImage = false;
   bool newProduct = false;
   bool processingImage = false;
+  bool isMoving = false;
   final nameController = TextEditingController();
   final modelController = TextEditingController();
   final categoryController = TextEditingController();
   final quantityController = TextEditingController();
   final commentController = TextEditingController();
+  final moveController = TextEditingController();
   final List<FocusNode> focusNode = List.generate(3, (index) => FocusNode());
   Map<String, dynamic> productData = {};
+  String? selectedHistory = "All" ;
+  String tableHistory = "ProductHistory";
+  String? fromLocation;
+  String? toLocation;
+  String moveLocation= appName == "Warehouse" || appName == "Management"? "Showroom" : "Warehouse";
 
-
+  int fromBal = 0;
+  int toBal = 0;
+  List<String> locations = ["All"];
+  String? selectedLocation;
 
   Color labelColor = WidgetClass.mainColor;
   String? imagePath;
@@ -68,8 +78,7 @@ class _ProductPageState extends State<ProductPage> {
       });
       print(filePath);
     } else {
-      // User canceled the file picking operation
-      print('No image file selected.');
+
     }
   }
 
@@ -77,18 +86,19 @@ class _ProductPageState extends State<ProductPage> {
 
   @override
   void initState() {
+    var x = MySavedPreferences.getPreference("WarehouseList");
+    for(var y in x){
+      locations.add(y.toString());
+    }
 
     // pageLoading = false;
     if(widget.data["Name"] == "" && widget.data["Model"] == ""){
       isEditing = true;
       newProduct = true;
     }
-    productData["Name"] = widget.data["Name"];
-    productData["Model"] = widget.data["Model"];
-    productData["Category"] =widget.data["Category"];
-    productData["Quantity"] = widget.data["Quantity"];
-    productData["Comment"] =widget.data["Comment"];
-    productData["ProductID"] = widget.data["ProductID"];
+
+    productData = widget.data;
+    productID = productData["ProductID"];
     productData["Image"] = InventoryImage(productId:  productData["ProductID"], imageType: "Images");
     // WidgetsBinding.instance.addPostFrameCallback((_) { changeActivePage();});
     super.initState();
@@ -101,6 +111,18 @@ class _ProductPageState extends State<ProductPage> {
 
     screenSize = MediaQuery.of(context).size;
     return  Scaffold(
+      floatingActionButton: MyFloatingActionButton(
+        text: 'Move Product',
+        onPressed: () async {
+          await moveProductDialog(context).then((value) => {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(backgroundColor: Colors.black87, content: Text("Product Moved Successfully!", style:  TextStyle(fontSize: screenSize!.height * 0.022, color: Colors.white),), duration:const Duration(milliseconds: 2000) ,)
+          ),
+            isMoving = false,
+            setState((){ }),});
+
+        },
+      ),
       body:  Stack(
         children: [
           Positioned(
@@ -110,14 +132,64 @@ class _ProductPageState extends State<ProductPage> {
             child: SizedBox(
                 width: screenSize!.width * 0.5,
                 height: screenSize!.height * 0.87,
-                child: TableClass(tableColumns: {"No" :ColumnSize.S, "Date" :ColumnSize.S, "Customer":ColumnSize.M,"Previous":ColumnSize.S,"Sold":ColumnSize.S,"Balance":ColumnSize.S}, tableName: "Product:${productData["ProductID"]}", myFunction: (){})
+                child: TableClass(
+                    tableColumns: {"No" :ColumnSize.S, "Date" :ColumnSize.S, "Customer":ColumnSize.M,"Previous":ColumnSize.S,selectedHistory == "All"? "Sold": "Supplied":ColumnSize.S,"Balance":ColumnSize.S},
+                    tableName: "Product:$productID $tableHistory",
+                    myFunction: (){
+                      showOrderDialog(context, selectedProductOrder);
+                    })
             ),
           ),
           Positioned(
               top:5,
               left: screenSize!.width * 0.43,
               child: SizedBox(
-                  child: Text("Product History", style: TextStyle(fontFamily: "Claredon", fontWeight: FontWeight.bold, fontSize: screenSize!.height * 0.022),))
+                  child: Text(selectedHistory == "All"? "Product History":"${LogicClass.returnTitleCase(selectedHistory!)}History"  , style: TextStyle(fontFamily: "Claredon", fontWeight: FontWeight.bold, fontSize: screenSize!.height * 0.022),))
+          ),
+          Positioned(
+              top:0,
+              right: screenSize!.width * 0.04,
+              child:   SizedBox(
+                height: 40,
+                child:  DropdownButton(
+                  alignment: AlignmentDirectional.bottomStart,
+                    isExpanded: false,
+                    dropdownColor: mainColor.withOpacity(0.9),
+                    style: const TextStyle(color: Colors.white),
+                    selectedItemBuilder: (BuildContext context) {
+                      return locations.map((String value) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              color: mainColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }).toList();
+                    },
+                    underline: Container(
+                      height: 1,
+                      color: mainColor,
+                    ),
+                    value: selectedHistory,
+                    items: locations
+                        .map((item) => DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(item),
+                    ))
+                        .toList(),
+                    onChanged: (string) {
+                      selectedHistory = string!;
+                      string == "All"?
+                      tableHistory = "ProductHistory":
+                      tableHistory = "${LogicClass.returnTitleCase(selectedHistory!).trim()}History";
+                      print(tableHistory);
+                      setState(() {});
+                    }),
+              ),
           ),
 
           Positioned(
@@ -152,10 +224,7 @@ class _ProductPageState extends State<ProductPage> {
                   ):  imagePath != null?
                   Image.file(files[1]!,fit: BoxFit.cover,):
                   productData["Image"]
-                  // const Image(
-                  //   image: AssetImage('assets/images/placeholder.jpg'),
-                  //   fit: BoxFit.cover,
-                  // )
+
               )
           ),
           Positioned(
@@ -334,21 +403,49 @@ class _ProductPageState extends State<ProductPage> {
                     "Quantity:",
                     style: TextStyle(fontFamily: "Claredon",fontWeight: FontWeight.bold,fontSize: screenSize!.height * 0.022,),
                   ),
-                  isEditing && newProduct?  SizedBox(
-                      width:  screenSize!.width * 0.32,
-                      child: TextField(
-                        focusNode: focusNode[2],
-                        style:  TextStyle(fontSize:  screenSize!.height * 0.022),
-                        controller: quantityController,
-                        decoration:  InputDecoration(
-                            errorStyle: const TextStyle(color: Colors.red),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: labelColor, width: 2.0),
+                  isEditing && newProduct?  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                          width:  screenSize!.width * 0.2,
+                          child: TextField(
+                            focusNode: focusNode[2],
+                            style:  TextStyle(fontSize:  screenSize!.height * 0.022),
+                            controller: quantityController,
+                            decoration:  InputDecoration(
+                                errorStyle: const TextStyle(color: Colors.red),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: labelColor, width: 2.0),
+                                ),
+                                suffixIcon:  Icon(Icons.edit, color: WidgetClass.mainColor,)),
+                          )),
+                      Column(
+                        children: [
+                          const Text("Location", style: TextStyle(fontSize: 11),),
+                          Container(
+                            transform:Matrix4.translationValues(0, 8, 0),
+                            height: 30,
+                            child: DropdownButton(
+                              isExpanded: false,
+                              value: fromLocation,
+                              items:  locations.map( (item) => DropdownMenuItem< String>(
+                                value: item,child: Text(item == "All" ? "": item,style: TextStyle(fontSize: screenSize!.height *0.017,  fontWeight: FontWeight.w400),),
+                              ))
+                                  .toList(),
+                              onChanged: (string) async{
+                                fromLocation = string;
+                                setState(() {});
+                              },
+                              // onChanged: null,
                             ),
-                            suffixIcon:  Icon(Icons.edit, color: WidgetClass.mainColor,)),
-                      )):
+                          ),
+                        ],
+                      )
+                    ],
+                  ):
                   Text(
-                    productData["Quantity"],
+                    productData["Quantity"].toString(),
                     style: TextStyle(
                       fontFamily: "Claredon",
                       fontSize: screenSize!.height * 0.022,
@@ -481,7 +578,7 @@ class _ProductPageState extends State<ProductPage> {
                 )
 
             );
-            Future.delayed(const Duration(milliseconds: 2000), () async {
+            Future.delayed(const Duration(milliseconds: 100), () async {
               var x = await FirebaseClass.getProductName(nameController.text);
                Navigator.of(context).pop(x);
             });
@@ -513,6 +610,10 @@ class _ProductPageState extends State<ProductPage> {
         FocusScope.of(context).requestFocus(focusNode[2]);
         return null;
       }
+      if(fromLocation == null || fromLocation == "All" || fromLocation == ""){
+          FocusScope.of(context).requestFocus(focusNode[2]);
+      }
+
     }
 
 
@@ -555,17 +656,19 @@ class _ProductPageState extends State<ProductPage> {
                     isEditing = false;
                     setState((){});
                     if(newProduct){
-                      var success = await createNewProduct(files.isNotEmpty);
-                      String snack = success? "Product Added Successfully!" : "Failed to Add Product";
-                      SnackBar snackBar = SnackBar(backgroundColor: Colors.black87, content: Text(snack, style:  TextStyle(fontSize: screenSize!.height * 0.022, color: Colors.white),), duration:const Duration(milliseconds: 2000) ,);
-                      Navigator.of(context).pop(false);
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      await createNewProduct(files.isNotEmpty).then((value) =>
+                      {
+                      Navigator.of(context).pop(false),
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.black87, content: Text(value? "Product Added Successfully!" : "Failed to Add Product", style:  TextStyle(fontSize: screenSize!.height * 0.022, color: Colors.white),), duration:const Duration(milliseconds: 2000) ,))
+                      });
+
                     }else{
-                      var success = await updateProduct(files.isNotEmpty && updateImage);
-                      String snack = success? "Product Updated Successfully!" : "Failed to Update Product";
-                      SnackBar snackBar = SnackBar(backgroundColor: Colors.black87, content: Text(snack, style:  TextStyle(fontSize: screenSize!.height * 0.022, color: Colors.white),), duration:const Duration(milliseconds: 2000) ,);
-                      Navigator.of(context).pop(false);
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      updateProduct(files.isNotEmpty && updateImage).then((value) =>
+                      {
+                        Navigator.of(context).pop(false),
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.black87, content: Text(value? "Product Updated Successfully!" : "Failed to Update Product", style:  TextStyle(fontSize: screenSize!.height * 0.022, color: Colors.white),), duration:const Duration(milliseconds: 2000) ,))
+                      });
+
                     }
 
                   },
@@ -577,6 +680,176 @@ class _ProductPageState extends State<ProductPage> {
         );
       },
     );
+  }
+
+  Future<bool?> moveProductDialog(BuildContext context) async {
+    // Add this variable to track the editing state
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black54,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            List<String> from = [];
+            for(var x in locations){
+             if(x != "All"){
+               from.add(x);
+             }
+            }
+            return AlertDialog(
+              title: const Text('Move Product'),
+              content:  SizedBox(
+                height: screenSize!.height * 0.43,
+                child: Stack(
+                  children: [
+                    Positioned(top:0, left: 10, child: Row(
+                      children: [
+                        const Text("From: \t\t", style: TextStyle(fontFamily: "claredon", fontWeight: FontWeight.bold),),
+                        DropdownButton(
+                          isExpanded: false,
+                          value: fromLocation,
+                          items:  from.map( (item) => DropdownMenuItem< String>(
+                                    value: item,child: Text(item,style: TextStyle(fontSize: screenSize!.height *0.017,  fontWeight: FontWeight.w400),),
+                                  ))
+                              .toList(),
+                          onChanged: (string) async{
+                            print(productData);
+                            fromLocation = string;
+                            setState(() {});
+                          },
+                          // onChanged: null,
+                        )
+
+                      ],
+                    )),
+                    Positioned(top:45, left: 10, child: Row(
+                      children: [
+                         Text("$fromLocation Stock: ", ),
+                        Text(productData[fromLocation].toString(), style: const TextStyle(fontFamily: "claredon"),),
+                        Text("\t\t\t $fromBal", style:  TextStyle(fontFamily: "claredon", color: Colors.red),),
+                      ],
+                    )),
+                    Positioned(top:100, left: 10, child: Row(
+                      children: [
+                        const Text("To: \t\t", style: TextStyle(fontFamily: "claredon", fontWeight: FontWeight.bold),),
+                        DropdownButton(
+                          isExpanded: false,
+                          value: toLocation,
+                          items:  from.map( (item) => DropdownMenuItem< String>(
+                            value: item,child: Text(item,style: TextStyle(fontSize: screenSize!.height *0.017,  fontWeight: FontWeight.w400),),
+                          ))
+                              .toList(),
+                          onChanged: (string) async{
+                            toLocation = string;
+                            setState(() {});
+                          },
+                          // onChanged: null,
+                        )
+
+                      ],
+                    )),
+                    // const Positioned(top:25,left: 100, child: Text("To:")),
+                    Positioned(top:150, left: 10, child: Row(
+                      children: [
+                        Text("$toLocation Stock: ", ),
+                        Text(productData[toLocation].toString(), style: const TextStyle(fontFamily: "claredon"),),
+                        Text("\t\t\t $toBal", style:  TextStyle(fontFamily: "claredon", color: Colors.green),),
+                      ],
+                    )),
+
+                     Positioned(top:200,left: 10,
+                        child: SizedBox(
+                          width: screenSize!.width * 0.15,
+                            child: TextField(
+                              controller: moveController,
+                              onChanged: (string){
+                                try{
+                                  // int? bal = int.tryParse(string);
+                                  int x = int.tryParse(string)??0;
+                                  if(x > productData[fromLocation]){
+                                    moveController.text = "0";
+                                    fromBal = 0;
+                                    toBal = 0;
+                                  }else{
+                                    fromBal  = productData[fromLocation] - x as int;
+                                    toBal  =x + productData[toLocation] as int;
+
+                                    productData["Qty"] = x;
+                                  }
+                                  setState((){});
+
+                                }catch(e){
+                                  moveController.text = "0";
+                                  fromBal = 0;
+                                  toBal = 0;
+                                  print(e);
+                                }
+                              },
+                              decoration: InputDecoration(
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: labelColor, width: 2.0),
+                                ),
+                                suffixIcon: isMoving? Padding(
+                                  padding: const EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+                                  child: Container( transform:Matrix4.translationValues(10, 5, 0), width: 10, height:10,child:  CircularProgressIndicator(strokeWidth: 2.0, color: mainColor, )),
+                                ): const SizedBox(),
+
+                                label: const Text(
+                                  "Quantity To Move",
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                      textBaseline: TextBaseline.alphabetic),
+                                ),labelStyle: TextStyle(fontSize: 14, color: labelColor)
+                                ,
+
+                            )))),
+
+
+                    Positioned(top:255,right: 10,
+                        child: MyCustomButton(
+                            text: "Move",
+                            onPressed: () async {
+                              isMoving = true;
+                              setState((){ });
+                              if(moveController.text != "0"){
+                                await moveProduct().then((value) => {
+                                  moveController.text = "",
+                                  Navigator.of(context).pop(false),
+                                });
+                              }
+
+
+
+                            },
+                            icon: Icons.airport_shuttle,
+                            size: const Size(100, 38)
+                        ),
+                            ),
+
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // User clicked on the Cancel button
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Close'),
+                ),
+
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> moveProduct() async {
+    await FirebaseClass.moveProduct(productData,fromLocation!, toLocation!);
+    return true;
   }
 
   Future<bool> updateProduct(bool updateImage) async{
@@ -615,7 +888,7 @@ class _ProductPageState extends State<ProductPage> {
     productData["Name"] = nameController.text.trim().toUpperCase().replaceAll("  ", " ");
     productData["Model"] = modelController.text.trim().toUpperCase();
     productData["Category"] = categoryController.text.trim().toUpperCase();
-    productData["Quantity"] = quantityController.text;
+    productData["Quantity"] = int.tryParse(quantityController.text);
     productData["Comment"] = commentController.text.trim().toUpperCase();
     productData["NameList"] = productData["Name"].toString().split(' ');
     if(hasImage){
@@ -626,9 +899,14 @@ class _ProductPageState extends State<ProductPage> {
       productData.remove("Thumbnail");
       productData.remove("Image");
     }
+    for(var loc in locations){
+      productData[loc] = 0;
+    }
+    productData[fromLocation!] = int.tryParse(quantityController.text);
     try {
-      var success = await FirebaseClass.createNewProduct(productData);
+      var success = await FirebaseClass.createNewProduct(productData,fromLocation!);
       productData["Image"] = InventoryImage(productId:  productData["ProductID"], imageType: "Images");
+      productID = productData["ProductID"];
       productData["ProductID"] = await FirebaseClass.getNewProductID();
 
       nameController.text = "";
@@ -645,6 +923,257 @@ class _ProductPageState extends State<ProductPage> {
       return false;
     }
 
+  }
+
+  Future<bool?> showOrderDialog(BuildContext context, Map<String, dynamic> data) async {
+    // Add this variable to track the editing state
+    int noOfItems = 0;
+    for(var element in data["Products"]){
+      noOfItems +=  element["Qty"] as int;
+    }
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black54,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title:  Text('Order ${data["Order"].toString()}'),
+              content:  SizedBox(
+                height: screenSize!.height ,
+                width: screenSize!.width * 0.5,
+                child: Stack(
+                  children:  [
+                    Positioned(
+                        top:0,
+                        left: 20,
+                        child: Text("MightyKens International Limited", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.02, fontWeight: FontWeight.bold),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.025,
+                        left: 20,
+                        child: Row(
+                          children: [
+                            Text("Order No:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.016),),
+                            Text(data["Order"].toString(), style: TextStyle(fontFamily: "Claredon", fontWeight: FontWeight.bold, fontSize: screenSize!.height * 0.016),),
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.04,
+                        left: 20,
+                        child: Text(LogicClass.fullDate.format(data["Date"]), style: TextStyle(fontFamily: "Claredon",fontWeight: FontWeight.bold, fontSize: screenSize!.height * 0.015),)
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.05,
+                        right: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("CUSTOMER:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.016, fontWeight: FontWeight.bold),),
+                            SizedBox(
+                                width: 250,
+                                child: Text(data["Name"], style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),)),
+                            Text(data["Phone"].toString(), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),),
+                            SizedBox(
+                                width: 250,
+                                child: Text(data["Address"].toString(), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.015),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.13,
+                        left: screenSize!.width * 0.22,
+                        child:  Text("Invoice", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.025, decoration: TextDecoration.underline, fontWeight: FontWeight.bold),)
+                    ),
+                    Positioned(
+                      top:screenSize!.height * 0.13,
+                      left: 10,
+                      child:   Container(height: 50,
+                          width:  screenSize!.width * 0.49,
+                          alignment: Alignment.bottomCenter,
+                          child:   Divider( height: 10, color: mainColor.withOpacity(0.8), thickness: 2,)),
+                    ),
+                    Positioned(
+                      top:screenSize!.height * 0.60,
+                      left: 10,
+                      child:   Container(height: 50,
+                          width:  screenSize!.width * 0.49,
+                          alignment: Alignment.bottomCenter,
+                          child:   Divider( height: 10, color:  mainColor.withOpacity(0.8), thickness: 2,)),
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.20,
+                        left: 0,
+                        child: Container(
+                          width:  screenSize!.width * 0.49,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              SizedBox(
+                                  width:  screenSize!.width * 0.32,
+                                  child: Text(" \t\t\t Product Details", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.06,
+                                  child: Text("Unit Price", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.04,
+                                  child: Text("Qty", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+
+                              SizedBox(
+                                  width:  screenSize!.width * 0.045,
+                                  child: Text("Total", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+                              SizedBox(width: screenSize!.width * 0.005,),
+                            ],
+                          ),
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.24,
+                        left: 20,
+                        child: SizedBox(
+                          height: screenSize!.height * 0.38,
+                          width:  screenSize!.width * 0.485,
+                          child: ListView.builder(
+                            itemCount: data["Products"].length,
+                            itemBuilder: (BuildContext context, int index) {
+                              Widget image =  Image.asset(
+                                'assets/images/placeholder.jpg',
+                                fit:   BoxFit.cover,
+                              );
+
+                              if(data["Products"].isNotEmpty){
+
+                                final File imageFile = File('${Platform.environment['USERPROFILE']}\\AppData\\Local\\CachedImages\\Thumbnails\\${data["Products"].elementAt(index)["ProductID"]}.jpg');
+                                if(imageFile.existsSync()){
+                                  image = Image.file(imageFile);
+                                }
+                              }
+
+
+                              return Container(
+                                width:  screenSize!.width * 0.49,
+                                height: screenSize!.height * 0.06,
+                                margin: const EdgeInsets.fromLTRB(0, 3, 0, 5),
+                                padding: EdgeInsets.zero,
+
+                                decoration: BoxDecoration(
+                                  color: mainColor.withAlpha(15),
+                                  border: Border.all(color:  mainColor.withOpacity(0.6), width: 1.0),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    SizedBox(
+                                        width: screenSize!.width * 0.04,
+                                        child: image),
+                                    SizedBox( width: screenSize!.width * 0.26,
+                                        child: Text(data["Products"].elementAt(index)["Name"], style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.bold),)),
+                                    Text(data["Products"].elementAt(index)["UnitPrice"].toString(), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w400),),
+                                    SizedBox(width: screenSize!.width * 0.01,),
+                                    Text(data["Products"].elementAt(index)["Qty"].toString(), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w400),),
+                                    SizedBox(width: screenSize!.width * 0.01,),
+                                    SizedBox(
+                                        width: screenSize!.width * 0.045,
+                                        child: Text(LogicClass.returnCommaValue(data["Products"].elementAt(index)["Total"].toString()).replaceAll("N", ""), textAlign: TextAlign.right, style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017,  fontWeight: FontWeight.w600),)),
+
+                                  ],
+                                ),
+                              );
+                            }
+                            ,
+                          ),
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.67,
+                        right: 10,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            SizedBox(
+                                width: screenSize!.width * 0.07,
+                                child: Text("Grand Total:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                            SizedBox(
+                                width: screenSize!.width * 0.06,
+                                child: Text(LogicClass.returnCommaValue(data["Amount"].toString()), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.67,
+                        left: 20,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            SizedBox(
+                                width: screenSize!.width * 0.09,
+                                child: Text("No of Items:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                            SizedBox(
+                                width: screenSize!.width * 0.06,
+                                child: Text(noOfItems.toString(), style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                          ],
+                        )
+                    ),
+                    Positioned(
+                        top:screenSize!.height * 0.70,
+                        left: 20,
+                        child:  Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox(
+                                    width: screenSize!.width * 0.09,
+                                    child: Text("Payment Status:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                                SizedBox(
+                                    width: screenSize!.width * 0.2,
+                                    child: Text("Paid ${data["Paid"]} with ${data["Method"]}", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                    width: screenSize!.width * 0.09,
+                                    child: Text("Payment Ref:", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),)),
+                                SizedBox(
+                                    width: screenSize!.width * 0.09,
+                                    child: Text("${data["Reference"]}", style: TextStyle(fontFamily: "Claredon", fontSize: screenSize!.height * 0.017, fontWeight: FontWeight.bold),))
+                              ],
+                            )
+                          ],
+                        )
+                    ),
+                  ],
+
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // User clicked on the Cancel button
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Print'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // User clicked on the Cancel button
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Close'),
+                ),
+
+
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
 

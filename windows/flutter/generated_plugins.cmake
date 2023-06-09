@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_multi_window
+  firebase_core
   image_compression_flutter
   permission_handler_windows
   screen_retriever

@@ -7,6 +7,7 @@ class Assets {
   static const String backgroundsBlueMid = 'assets/images/backgrounds/blueMid.jpg';
   static const String backgroundsGreenDark = 'assets/images/backgrounds/greenDark.jpg';
   static const String backgroundsGreenYellow = 'assets/images/backgrounds/greenYellow.jpg';
+  static const String backgroundsLogin = 'assets/images/backgrounds/login.jpg';
   static const String backgroundsMenuDark = 'assets/images/backgrounds/menuDark.jpg';
   static const String backgroundsMenuGreen = 'assets/images/backgrounds/menuGreen.jpg';
   static const String backgroundsMenuGreen2 = 'assets/images/backgrounds/menuGreen2.jpg';
@@ -23,6 +24,7 @@ class Assets {
   static const String imagesBell = 'assets/images/bell.png';
   static const String imagesBluelogo = 'assets/images/bluelogo.jpg';
   static const String imagesCollectPayment = 'assets/images/collectPayment.png';
+  static const String imagesCurve = 'assets/images/curve.jpg';
   static const String imagesCustomers = 'assets/images/customers.png';
   static const String imagesDominion = 'assets/images/Dominion.jpg';
   static const String imagesDominion2 = 'assets/images/Dominion2.jpg';

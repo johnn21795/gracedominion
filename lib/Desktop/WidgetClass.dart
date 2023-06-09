@@ -2,14 +2,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:data_table_2/data_table_2.dart';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
+
 
 import '../Classes/LogicClass.dart';
 import '../Interface/MainInterface.dart';
-import '../Interface/Product.dart';
+import 'package:dio/dio.dart';
+
 
 
 
@@ -70,7 +71,7 @@ class MyFloatingActionButtonState extends State<MyFloatingActionButton> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: _isHovering ? Center(child: Text(widget.text, style:  TextStyle(color: WidgetClass.mainColor, fontWeight: FontWeight.bold),)) :
-          Icon(Icons.add, color: !_isHovering ? Colors.white: WidgetClass.mainColor,),
+          Icon(widget.text == 'Select Date'? Icons.calendar_month :widget.text == 'Move Product'? Icons.airport_shuttle_outlined : Icons.add, color: !_isHovering ? Colors.white: WidgetClass.mainColor,),
         ),
       ),
     );
@@ -112,6 +113,7 @@ class MyCustomButtonState extends State<MyCustomButton> {
       style: ElevatedButton.styleFrom(
         alignment: Alignment.centerLeft,
         backgroundColor:_isHovering ?   Colors.white : WidgetClass.mainColor,
+        // backgroundColor: Colors.transparent,
         fixedSize: widget.size,
         shape:widget.size.height == 42? RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)) : RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
       ),
@@ -181,6 +183,182 @@ class _InventoryImageState extends State<InventoryImage> {
     );
   }
 }
+
+class LoadingDialog extends StatefulWidget {
+  final String title;
+  const LoadingDialog({super.key,  required this.title});
+
+  // const LoadingDialog(BuildContext context, {Key? key}) : super(key: key);
+
+  @override
+  State<LoadingDialog> createState() => _LoadingDialogState();
+}
+
+class _LoadingDialogState extends State<LoadingDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        final dialog =  AlertDialog(
+            title: Text(widget.title),
+            content:  Padding( padding: const
+            EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
+              child: Container(
+                transform: Matrix4.translationValues(10, 5, 0),
+                width: 200,
+                height: 200,
+                child: CircularProgressIndicator(
+                  strokeWidth: 5.0,
+                  color: mainColor,
+                ),
+              ),
+            )
+
+
+        );
+        return dialog;
+      },
+    );
+  }
+}
+
+class PaymentConfirm extends StatefulWidget {
+  final String status;
+  final String ref;
+  final String collection;
+  const PaymentConfirm({Key? key, required this.status, required this.ref,required this.collection}) : super(key: key);
+
+
+  @override
+  State<PaymentConfirm> createState() => _PaymentConfirmState();
+}
+
+class _PaymentConfirmState extends State<PaymentConfirm> {
+  String status = "";
+  @override
+  Widget build(BuildContext context) {
+
+    return  Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(status == "" ? widget.status : status, style: TextStyle(color:status == ""? widget.status == "Unconfirmed"? Colors.red: Colors.green:Colors.green , fontWeight: FontWeight.bold)),
+        Visibility(
+          visible:status == ""? widget.status == "Unconfirmed" : false,
+          child: TextButton(onPressed: () async{
+            await FirebaseClass.updateDynamic( widget.collection, widget.ref,
+                {"Status": "Confirmed"});
+            status =  await FirebaseClass.getDynamic(widget.collection, widget.ref,
+                "Status");
+            setState(() {
+
+
+            });
+          }, child: Icon(Icons.done_all, color: Colors.green[900],)),
+        ),
+      ],
+    );
+  }
+}
+
+
+class DownloadFileScreen extends StatefulWidget {
+  @override
+  _DownloadFileScreenState createState() => _DownloadFileScreenState();
+}
+
+class _DownloadFileScreenState extends State<DownloadFileScreen> {
+  double _progress = 0.0;
+
+  Future<int?> downloadFile() async {
+    final String? userProfile = Platform.environment['USERPROFILE'];
+    final String imageFolderPath = '$userProfile\\AppData\\Local\\CachedImages\\mightykens.exe';
+    final File softwareFile = File(imageFolderPath);
+    if (softwareFile.existsSync()) {
+      softwareFile.deleteSync();
+    }
+
+    softwareFile.createSync();
+
+    final dio = Dio();
+    final response = await dio.download(
+      await FirebaseClass.updateSoftware(),
+      imageFolderPath,
+      onReceiveProgress: (receivedBytes, totalBytes) {
+        if (totalBytes != -1) {
+          double progress = (receivedBytes / totalBytes) * 100;
+          setState(() {
+            _progress = progress;
+          });
+        }
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return response.statusCode;
+    } else {
+      return 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            MyCustomButton(
+                text: "Update Software",
+                onPressed: () async {
+                  downloadFile().then((value) => {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.black87, content: Text(value == 200? "Software Update Successful": "Update Failed", style:  TextStyle(fontSize: 18, color: Colors.white), ), duration:const Duration(milliseconds: 2000) ,))
+                  });
+
+                },
+                icon: Icons.download,
+                size: const Size(180, 41)
+            ),
+            const SizedBox(height: 5),
+            Visibility(
+              visible: _progress.ceil() > 0,
+                child: Center(child: Text("${_progress.ceil()} %", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black ),))),
+
+          ],
+        ),
+      ),
+    );
+  }
+}
+class GradientProgressBar extends StatelessWidget {
+  const GradientProgressBar(
+      {
+        required this.value,
+        required this.height
+      });
+  final double value;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      blendMode: BlendMode.colorBurn,
+      shaderCallback: (Rect bounds) { return const LinearGradient(
+          colors: [
+            Color(0xff2fbb04),
+            Color(0xff185801)
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter).createShader(bounds);},
+      child: LinearProgressIndicator(value: value, minHeight: height, backgroundColor: Colors.white, color: Colors.green[400],),
+    );
+  }
+}
+
+
+
+
 
 
 

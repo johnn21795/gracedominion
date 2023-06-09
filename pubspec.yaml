@@ -45,6 +45,7 @@ dependencies:
   path_provider: ^2.0.11
   sqflite: ^2.1.0+1
   font_awesome_flutter: ^10.4.0
+  dio: ^5.2.0+1
 
 
 #  windows dependencies
@@ -56,6 +57,8 @@ dependencies:
   file_picker: ^4.0.0
   image_compression_flutter: ^1.0.3
   fast_image_resizer: ^0.0.2
+  msix: ^3.14.2
+
 
   flutter:
     sdk: flutter
@@ -80,6 +83,15 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+
+msix_config:
+  display_name: MightyKens International Limited
+  publisher_display_name: Xenaya Corporations
+  identity_name: com.xenaya.mightykens
+  msix_version: 1.0.0.0
+#  logo_path: C:\path\to\logo.png
+
+
 flutter:
 
   # The following line ensures that the Material Icons font is

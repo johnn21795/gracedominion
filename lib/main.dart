@@ -61,12 +61,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Grace Dominion',
+      title: 'MightyKens International Limited',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.purple,
+        primarySwatch: Colors.red,
       ),
-      initialRoute: Platform.isWindows? AppRoutes.windowsSplash : AppRoutes.login,
+      initialRoute:  AppRoutes.login,
       onGenerateRoute: (route) => getRoute(route),
       // home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );

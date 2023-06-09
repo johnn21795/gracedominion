@@ -1,6 +1,7 @@
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:gracedominion/Interface/NewStock.dart';
 import 'package:gracedominion/Interface/Product.dart';
 import 'package:intl/intl.dart';
 import '../AppRoutes.dart';
@@ -27,19 +28,26 @@ class _InventoryPageState extends State<InventoryPage> {
   bool isTyping = false;
   final searchController = TextEditingController();
   String cardLabel = "Search Inventory";
+  // List<String> locations = [];
+  String? selectedLocation;
   Color labelColor = mainColor;
   bool isSearching = false;
-  String searchQuery = "";
+  bool reload = false;
+
 
 
   void changeActivePage(){
     widget.myFunction.call();
   }
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    print('Rebuild inventory');
     screenSize = MediaQuery.of(context).size;
     return Scaffold(
       floatingActionButton: MyFloatingActionButton(
@@ -68,17 +76,11 @@ class _InventoryPageState extends State<InventoryPage> {
                   width: screenSize!.width * 0.35,
                   child: TextField(
                     onSubmitted: (query) async {
-                      isSearching = true;
+                      reload = searchController.text.isEmpty;
                       setState(() {});
-                      searchQuery = query.toUpperCase();
-                      isSearching = false;
-                      setState(() {});
-
-
-                    },
-                    onChanged: (card) async {
-
-
+                      // searchQuery = query.toUpperCase();
+                      // isSearching = false;
+                      // setState(() {});
                     },
                     style: const TextStyle(fontSize: 14),
                     controller: searchController,
@@ -105,11 +107,57 @@ class _InventoryPageState extends State<InventoryPage> {
                   child: MyCustomButton(
                     text: "Search",
                     onPressed: (){
-                    
+                      reload = searchController.text.isEmpty;
+                      setState(() {});
                     },
                     icon: Icons.search,
                     size: const Size(130, 38)
                   ),
+                ),
+
+              ],
+            ),
+          ),
+          Positioned(
+            right: screenSize!.width * 0.3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Select Location", style: TextStyle(fontSize: 11),),
+                Container(
+                  transform: Matrix4.translationValues(0, -10, 0),
+                  child: DropdownButton(
+                      isExpanded: false,
+                      dropdownColor: mainColor.withOpacity(0.9),
+                      style: const TextStyle(color: Colors.white),
+                      selectedItemBuilder: (BuildContext context) {
+                        return locations.map((String value) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                color: mainColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }).toList();
+                      },
+                      underline: Container(
+                        height: 1,
+                        color: mainColor,
+                      ),
+                      value: selectedLocation ?? locations[0],
+                      items: locations.map((item) => DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(item),
+                      ))
+                          .toList(),
+                      onChanged: (string) {
+                        selectedLocation = string!;
+                        setState(() {});
+                      }),
                 ),
               ],
             ),
@@ -118,9 +166,15 @@ class _InventoryPageState extends State<InventoryPage> {
             top: 10,
               right:  screenSize!.width * 0.03,
             child: MyCustomButton(
-              text: "All Products",
-              onPressed: (){
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              text: "New Stock",
+              onPressed: () async{
+                pageLoading = true;
+                changeActivePage();
+                activePage = "Add New Stock";
+                page =  const NewStockPage();
+                pageLoading = false;
+                changeActivePage();
+                // Navigator.pushReplacementNamed(context, AppRoutes.login);
 
               },
               icon: Icons.list_alt_rounded,
@@ -133,10 +187,10 @@ class _InventoryPageState extends State<InventoryPage> {
               height: screenSize!.height * 0.87 + 20,
                 width: screenSize!.width * 0.87,
                 child:  TableClass(
-                    tableColumns: const {"No" :ColumnSize.S,"Image":ColumnSize.S,"Name":ColumnSize.L,"Model":ColumnSize.S,"Category":ColumnSize.M,"Quantity":ColumnSize.S,"Comment":ColumnSize.S},
+                    tableColumns: const {"No" :ColumnSize.S,"Image":ColumnSize.S,"Name":ColumnSize.L,"Model":ColumnSize.S,"Category":ColumnSize.M,"Quantity":ColumnSize.M,"Comment":ColumnSize.S},
                     tableName: "Inventory",
                     myFunction: changeActivePage,
-                    searchQuery: searchQuery,
+                    searchQuery:  {"Search": searchController.text.toUpperCase(), "Reload":reload, "SelectedLocation":selectedLocation?? locations[0]},
                 ),
 
 

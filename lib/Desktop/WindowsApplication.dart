@@ -40,10 +40,9 @@ class WindowsApplication{
     {
      //for storage
     FirebaseStorage.instanceFor(app: value),
-      //for Authentications and Logins
-    FirebaseAuth.instanceFor(app: value),
-    // MainClass.loadFireBaseAppInformation(),
-    // MainClass.loadStaffInformation(),
+      //for Authentications and
+      FirebaseAuth.instanceFor(app: value),
+
     });
 
     // for FireStore Database
@@ -78,7 +77,7 @@ class WindowsApplication{
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
+      titleBarStyle: TitleBarStyle.normal,
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();

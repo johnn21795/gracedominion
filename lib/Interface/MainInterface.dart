@@ -2,14 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Interface/Customers.dart';
+import '../AppRoutes.dart';
 import 'Inventory.dart';
-import 'package:gracedominion/Showroom/Payments.dart';
-import 'package:gracedominion/Showroom/Sales.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../Desktop/WidgetClass.dart';
 import 'Orders.dart';
+import 'Payments.dart';
+import 'Sales.dart';
+import 'Settings.dart';
 import 'Supply.dart';
+import 'SupplyRecords.dart';
 
 
 
@@ -25,24 +28,32 @@ class MainInterface extends StatefulWidget {
   State<MainInterface> createState() => _MainInterfaceState();
 }
 
-String activePage = "Dashboard";
+String activePage = "Inventory";
 Widget page = Container();
 Color mainColor = const Color(0xff000055);
 bool pageLoading = false;
+String? username;
+String? appName;
+String? email;
+List<String> locations = [];
 class _MainInterfaceState extends State<MainInterface> {
   List<bool> isHover = List.generate(6, (index) => false);
 
 
   @override
   void initState() {
-
+    var x = MySavedPreferences.getPreference("WarehouseList");
+    locations = [];
+    for(var y in x){
+      locations.add(y.toString());
+    }
+    page = InventoryPage(myFunction: changeState);
     windowManager.setSize(const Size(1300, 700), animate: true);
     windowManager.center(animate: true);
     windowManager.focus();
     super.initState();
   }
-  String? username;
-  String? appName;
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +61,7 @@ class _MainInterfaceState extends State<MainInterface> {
     mainColor = map["Color"];
     username = map["Name"];
     appName = map["App"];
+    email = map["Email"];
     WidgetClass.mainColor = mainColor;
 
     return Scaffold(
@@ -80,11 +92,11 @@ class _MainInterfaceState extends State<MainInterface> {
 
                   appName! == "Warehouse"?
                   SizedBox(height:50, child: MyCustomButton(text: "Supply", onPressed:  (){activePage = "Supply"; page = const SupplyPage(); setState(() {});}, icon: FontAwesomeIcons.vanShuttle, size: const Size(150, 42))):
-                  SizedBox(height:50, child: MyCustomButton(text: "Orders", onPressed:  (){activePage = "Orders"; page = const OrderPage(); setState(() {});}, icon: FontAwesomeIcons.moneyCheckDollar, size: const Size(150, 42))),
+                  SizedBox(height:50, child: MyCustomButton(text: "Orders", onPressed:  (){activePage = "Orders";  page = const OrderPage(); setState(() {});}, icon: FontAwesomeIcons.moneyCheckDollar, size: const Size(150, 42))),
                   const SizedBox(height: 1,),
 
                   appName! == "Warehouse"?
-                  SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Records"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))):
+                  SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Supply Records"; page = const SupplyRecord(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))):
                   SizedBox(height:50, child: MyCustomButton(text: "Customer", onPressed:  (){activePage = "Customers"; page =  CustomersPage(myFunction: changeState); setState(() {});}, icon: FontAwesomeIcons.peopleGroup, size: const Size(150, 42))),
                   const SizedBox(height: 1,),
 
@@ -102,15 +114,18 @@ class _MainInterfaceState extends State<MainInterface> {
                   const SizedBox(height: 1,),
 
                   appName! == "Management"?
-                  SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Supply Records"; page = const SalesPage(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))):
+                  SizedBox(height:50, child: MyCustomButton(text: "Records", onPressed:  (){activePage = "Supply Records"; page = const SupplyRecord(); setState(() {});}, icon: FontAwesomeIcons.book, size: const Size(150, 42))):
                   const SizedBox(height: 1,),
-
                   appName! == "Management"?
-                  SizedBox(height:50, child: MyCustomButton(text: "Authorize", onPressed:  (){activePage = "Authorization"; page = const SalesPage(); setState(() {});}, icon: Icons.done_all_outlined, size: const Size(150, 42))):
+                  SizedBox(height:50, child: MyCustomButton(text: "Settings", onPressed:  (){activePage = "Settings"; page = const SettingsPage(); setState(() {});}, icon: FontAwesomeIcons.gears, size: const Size(150, 42))):
                   const SizedBox(height: 1,),
 
 
 
+                  Expanded(child: Container()),
+
+                  SizedBox(height:50, child: MyCustomButton(text: "Log Out", onPressed:  (){Navigator.pushReplacementNamed(context, AppRoutes.login);}, icon: Icons.exit_to_app, size: const Size(150, 42))),
+                  const SizedBox(height: 10,),
                 ],
               ),
             ),
@@ -130,7 +145,7 @@ class _MainInterfaceState extends State<MainInterface> {
                     Expanded(
                         child: Container(
                           color:  const Color(0xFFEFEFEF),
-                          child: selectedPage(context),
+                          child: selectedPage(),
                         )),
                   ],
                 ),
@@ -147,7 +162,6 @@ class _MainInterfaceState extends State<MainInterface> {
   void changeState(){
 
     setState(() {
-    print("changing MainInterface $pageLoading");
   });
 
 
@@ -203,31 +217,29 @@ class _MainInterfaceState extends State<MainInterface> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children:  [
             Padding(
-              padding: EdgeInsets.only(top: 5.0),
+              padding: const EdgeInsets.only(top: 5.0),
               child: Text(
                 username!, textAlign: TextAlign.start,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'Claredon'),),
             ),
             Text(
-              "Junior Manager",  textAlign: TextAlign.end,
-              style: TextStyle( color: Colors.grey,
+              email!,  textAlign: TextAlign.end,
+              style: const TextStyle( color: Colors.grey,
                 fontSize: 13,),),
           ],
         ),
         const SizedBox(width: 10,),
         CircleAvatar(
             radius: 20,
+            backgroundColor: mainColor,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration:  const BoxDecoration(
                   borderRadius: BorderRadius.all(
                       Radius.circular(20)),
-                  image: DecorationImage(
-                      image: AssetImage(
-                          'assets/images/profile.jpg')
 
-                  )
               ),
+              child: Text(username!.characters.first),
 
             )
         ),
@@ -236,7 +248,6 @@ class _MainInterfaceState extends State<MainInterface> {
   }
   Widget loadingDialog(BuildContext context)  {
     // Add this variable to track the editing state
-
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             final dialog =  AlertDialog(
@@ -256,21 +267,14 @@ class _MainInterfaceState extends State<MainInterface> {
 
 
             );
-            Future.delayed(const Duration(milliseconds: 1000), () async {
-              // var x = await loadDialogComplete();
-              // print("Var XX..... $x");
-              // if(x){
-              //   Navigator.of(context).pop();
-              // }
-
-            });
             return dialog;
           },
         );
   }
 
-  Widget selectedPage(BuildContext context) {
-    return pageLoading? loadingDialog(context) : page;
+  Widget selectedPage() {
+    // return pageLoading? loadingDialog(context) : page;
+    return pageLoading? const LoadingDialog(title: "Loading...",) : page;
   }
 }
 

@@ -20,7 +20,7 @@ class _SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) { initialize();});
+    // WidgetsBinding.instance.addPostFrameCallback((_) { initialize();});
   }
 
 
@@ -49,9 +49,9 @@ class _SplashState extends State<Splash> {
 
       child: Column(
         children: [
-          Text('Grace Dominion Limited', style: TextStyle(fontSize: 35, color: Colors.purple[800], decoration: TextDecoration.none, fontFamily: 'Claredon'),),
+          Text('MightyKens International Limited', style: TextStyle(fontSize: 35, color: Colors.purple[800], decoration: TextDecoration.none, fontFamily: 'Claredon'),),
 
-          GradientText('Accounting Software', style: TextStyle(fontSize: 23, color: Colors.yellow[200],  decoration: TextDecoration.none, fontFamily: 'Claredon'),),
+          GradientText('Business Software', style: TextStyle(fontSize: 23, color: Colors.yellow[200],  decoration: TextDecoration.none, fontFamily: 'Claredon'),),
           const SizedBox(height: 50,),
 
           Container(alignment:Alignment.centerLeft, child: Padding(

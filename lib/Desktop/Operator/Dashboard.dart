@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gracedominion/Classes/MainClass.dart';
-import 'package:gracedominion/Desktop/Splash.dart';
 import 'package:gracedominion/Desktop/WidgetClass.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:intl/intl.dart';
+
 
 import '../../Classes/SQLite_Import.dart';
 

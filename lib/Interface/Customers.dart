@@ -1,9 +1,9 @@
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:gracedominion/Interface/Product.dart';
 import 'package:intl/intl.dart';
 
+import '../Classes/LogicClass.dart';
 import '../Classes/TableClass.dart';
 import '../Desktop/WidgetClass.dart';
 import 'MainInterface.dart';
@@ -22,11 +22,11 @@ class CustomersPage extends StatefulWidget {
 }
 
 class _CustomersPageState extends State<CustomersPage> {
-  bool isTyping = false;
   final cardController = TextEditingController();
-  String cardLabel = "Search Customer";
   Color labelColor = WidgetClass.mainColor;
   bool isSearching = false;
+  String filter = "All";
+  bool reload = false;
 
   void changeActivePage(){
     widget.myFunction.call();
@@ -38,13 +38,12 @@ class _CustomersPageState extends State<CustomersPage> {
     return  Scaffold(
       floatingActionButton: MyFloatingActionButton(
         text: 'Add New Customer',
-        onPressed: (){
+        onPressed: () async {
           pageLoading = true;
           changeActivePage();
           activePage = "Profile";
-          print("Fuck!!!!");
-          // var productID = await FirebaseClass.getNewProductID();
-          page =  Profile();
+          var customerID = await FirebaseClass.getNewCustomerID();
+          page =  Profile(data: {"Name":"", "Phone":"", "Address":"", "Balance":"0", "Comment":"", "CustomerID":customerID});
           pageLoading = false;
           changeActivePage();
 
@@ -64,11 +63,10 @@ class _CustomersPageState extends State<CustomersPage> {
                   width: screenSize!.width * 0.35,
                   child: TextField(
                     onSubmitted: (query){
+                      reload = cardController.text.isEmpty;
+                      setState(() {});
+                    },
 
-                    },
-                    onChanged: (card) async {
-                      setState(() { });
-                    },
                     style: const TextStyle(fontSize: 14),
                     controller: cardController,
                     decoration:  InputDecoration(
@@ -79,10 +77,10 @@ class _CustomersPageState extends State<CustomersPage> {
                           padding: const EdgeInsets.only(top: 10.0, bottom: 10.0, right: 18.0, left: 1.0),
                           child: Container( transform:Matrix4.translationValues(10, 5, 0), width: 10, height:10,child: const CircularProgressIndicator(strokeWidth: 2.0 )),
                         ): const SizedBox(),
-                        label: Text(
-                          cardLabel,
+                        label: const Text(
+                          "Search Customer",
                           textAlign: TextAlign.right,
-                          style: const TextStyle(
+                          style: TextStyle(
                               textBaseline: TextBaseline.alphabetic),
                         ),labelStyle: TextStyle(fontSize: 12, color: labelColor)
                     ),
@@ -103,10 +101,54 @@ class _CustomersPageState extends State<CustomersPage> {
           ),
           Positioned(
             top:50,
-            child: SizedBox(
-                height: screenSize!.height * 0.87,
-                child:  TableClass(tableColumns: const {"No" :ColumnSize.S,"Name":ColumnSize.M,"Phone":ColumnSize.M,"Orders":ColumnSize.S,"Amount Spent":ColumnSize.S,"Balance":ColumnSize.S}, tableName: "Customers", myFunction: (){},)),
-          )
+            child: Center(
+              child: SizedBox(
+                  height: screenSize!.height * 0.87 + 20,
+                  width: screenSize!.width * 0.87,
+                  child:  TableClass(
+                    tableColumns: const {"No" :ColumnSize.S,"Name":ColumnSize.M,"Phone":ColumnSize.S,"Address":ColumnSize.M,"LastOrder":ColumnSize.S,"TotalOrders":ColumnSize.S,"OrdersAmount":ColumnSize.S,"Balance":ColumnSize.S},
+                    tableName: "Customers",
+                    myFunction: changeActivePage,
+                    searchQuery:  {"Search": cardController.text.toUpperCase(), "Reload":reload},
+                  )),
+            ),
+          ),
+          Positioned(
+            right: screenSize!.width * 0.07,
+            child: DropdownButton(
+                isExpanded: false,
+                dropdownColor: mainColor.withOpacity(0.9),
+                style: const TextStyle(color: Colors.white),
+                selectedItemBuilder: (BuildContext context) {
+                  return ["All", "Debtors", "Creditors"].map((String value) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: mainColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
+                underline: Container(
+                  height: 1,
+                  color: mainColor,
+                ),
+                value: filter,
+                items: ["All", "Debtors", "Creditors"]
+                    .map((item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item),
+                ))
+                    .toList(),
+                onChanged: (string) {
+                  filter = string!;
+                  setState(() {});
+                }),
+          ),
         ],
       )
       ,
